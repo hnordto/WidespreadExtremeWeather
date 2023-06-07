@@ -1,0 +1,41 @@
+---
+title: "Widespread Extreme Weather Documentation"
+author: "Henrik Nordtorp"
+date: "`r Sys.Date()`"
+output: 
+  rmdformats::readthedown:
+    toc_depth: 3
+---
+
+---
+
+### `filter_region()`
+**Subset discharge data based on geographical region**
+
+#### Description
+
+`filter_region()` subsets a NVE discharge data set based on desired Norwegian geographical region. 
+
+#### Usage
+
+`filter_region(nvedata, region = "east")`
+
+#### Arguments
+
+- `nvedata` A NVE data set (`data.table`/`data.frame`)
+- `region` A character. Defaults to `"east"`. Allowed values:
+  + `"east"`: Corresponding to regine area 1-16, 311 
+  + `"south"`: Corresponding to regine area 17-18 
+  + `"west"`: Corresponding to regine area 29-119 
+  + `"mid"`: Corresponding to regine area  120-189, 307, 308 
+  + `"north"`: Corresponding to regine area 190-247 
+
+
+#### Return
+
+A NVE data set (`data.table`/`data.frame`)
+
+---
+
+### `make_rec_discharge()`
+*Transform NVE data *
