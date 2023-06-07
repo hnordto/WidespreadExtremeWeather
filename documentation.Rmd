@@ -229,7 +229,7 @@ Computes the threshold as the $u$th percentile in weather measurement (e.g. disc
 A `data.table` with 2 variables:
 
 - `stat_id` Station ID representing location
-- `mu` A numeric: The threshold value
+- `u` A numeric: The threshold value
 
 ---
 
