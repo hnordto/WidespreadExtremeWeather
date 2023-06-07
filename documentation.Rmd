@@ -3,8 +3,8 @@ title: "Widespread Extreme Weather Documentation"
 author: "Henrik Nordtorp"
 date: "`r Sys.Date()`"
 output: 
-  rmdformats::readthedown:
-    toc_depth: 3
+  rmdformats::robobook:
+    toc_depth: 4
 ---
 
 ## Special data types
@@ -136,7 +136,8 @@ Reshapes the "wide" format returned default by `make_rec_discharge()` onto a "lo
 #### Return
 
 
-- A `data.table` with four variables:
+A `data.table` with four variables:
+
   + `date` A date: The given date
   + `stat` A character: Station ID
   + `val` A numeric boolean: `1` if data are recorded on the combination of date and station, `0` else
@@ -195,6 +196,73 @@ Subsets a NVE data by removing years and stations containing a lot of missing da
 #### Return
 
 A NVE data set (`data.table`/`data.frame`)
+
+
+---
+
+## Main analysis functions
+
+These functions are found in the `main_functions.R` file.
+
+---
+
+### `extreme_threshold()`
+**Compute location-specific thresholds for extreme events**
+
+#### Description
+
+Computes the threshold as the $u$th percentile in weather measurement (e.g. discharge, precipitation), grouped by location.
+
+#### Usage
+
+`extreme_threshold(data, probs = .9)`
+
+#### Arguments
+
+- `data` A data set with (minimum) the following variables:
+  + `stat_id`: Station ID, i.e. location
+  + `qt`: Weather measurement
+- `probs` Numeric vector of probabilities with values in $[0, 1]$. Determines the sample quantiles.
+
+#### Return
+
+A `data.table` with 2 variables:
+
+- `stat_id` Station ID representing location
+- `mu` A numeric: The threshold value
+
+---
+
+### `extreme_events()`
+**Identify extreme weather events**
+
+#### Description
+
+Identifies extreme weather events in a data frame by comparing all records to a specified extreme threshold.
+
+#### Usage
+
+`extreme_events(data, extreme_thresholds = NULL, probs = .9)`
+
+#### Arguments
+
+- `data` A data set with (minimum) the following variables:
+  + `stat_id`: station ID, i.e. location
+  + `qt`: Weather measurement
+  + `date`: Date of measurements
+- `extreme_thresholds` A `data.table` returned by `extreme_threshold()` or `NULL` (default)
+  + `NULL` inherits `extreme_threshold()` to calculate the extreme thresholds
+- `probs` Numeric vector of probabilities with values in $[0,1]$. Determines sample quantiles if `extreme_thresholds = NULL`.
+
+#### Return
+
+A `data.table` with 3 variables:
+
+- `stat_id` Station ID representing location
+- `date` Date of an extreme event
+- `qt` Weather measurement recorded at day of the event
+
+---
 
 
 
