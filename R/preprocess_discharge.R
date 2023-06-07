@@ -147,7 +147,7 @@ subset_discharge <- function(nvedat,
     this.station = station.freq[stat == uniquestations$stat[i]]
     
     # Iterate over all years
-    for (j in 1:nrow(this_station)) {
+    for (j in 1:nrow(this.station)) {
       this.year = this.station[j,]
       
       # If a station has less measurements than the day threshold a given year
