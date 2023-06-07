@@ -7,6 +7,45 @@ output:
     toc_depth: 3
 ---
 
+## Special data types
+
+
+This section introduces special cases of R data types used throughout the code. This includes, but are not limited to, special lists/data frames, etc.
+
+---
+
+### `NVE data set`
+**Discharge data supplied by The Norwegian Water Resources and Energy Directorate (NVE)**
+
+#### Description
+A $m \times 15$ data set with $m$ discharge measurements on 15 variables.
+
+#### Format
+
+- Variables
+  + `drainage_basin_key` An integer
+  + `stat_id` An integer: Measurement station ID
+  + `qt` A numeric: Discharge ($m^3/s$)
+  + `year` An integer: Year of measurement
+  + `month` An integer: Month of measurement
+  + `day` An integer: Day of measurement
+  + `date` A date: Date of measurement
+  + `regine_area` An integer: ID describing the geographical position of the station
+  + `main_no` An integer
+  + `area_total` A numeric: Total area
+  + `reguleringsgrad_magasin` A numeric: the degree of regulation in the water reservoir
+  + `poly_ind` An integer
+  + `poly_area` A numeric
+  + `mean_utmx` A numeric: The mean UTM x-coordinate for the corresponding area
+  + `mean_utmy` A numeric.: The mean UTM y-coordinate for the corresponding area
+
+
+---
+
+## Pre-processing functions
+
+These functions are found in the `preprocess_discharge.R` file.
+
 ---
 
 ### `filter_region()`
@@ -18,17 +57,17 @@ output:
 
 #### Usage
 
-`filter_region(nvedata, region = "east")`
+`filter_region(nvedat, region = "east")`
 
 #### Arguments
 
-- `nvedata` A NVE data set (`data.table`/`data.frame`)
+- `nvedat` A NVE data set (`data.table`/`data.frame`)
 - `region` A character. Defaults to `"east"`. Allowed values:
-  + `"east"`: Corresponding to regine area 1-16, 311 
-  + `"south"`: Corresponding to regine area 17-18 
-  + `"west"`: Corresponding to regine area 29-119 
-  + `"mid"`: Corresponding to regine area  120-189, 307, 308 
-  + `"north"`: Corresponding to regine area 190-247 
+  + `"east"` Corresponding to regine area 1-16, 311 
+  + `"south"` Corresponding to regine area 17-18 
+  + `"west"` Corresponding to regine area 29-119 
+  + `"mid"` Corresponding to regine area  120-189, 307, 308 
+  + `"north"` Corresponding to regine area 190-247 
 
 
 #### Return
@@ -38,4 +77,140 @@ A NVE data set (`data.table`/`data.frame`)
 ---
 
 ### `make_rec_discharge()`
-*Transform NVE data *
+**Create a data frame representing discharge measurements for all dates in the data set**
+
+
+#### Description
+
+`make_rec_discharge()` reshapes the original data frame making it easier to work with problems related to available measurements and data validity.
+
+
+#### Usage
+
+`make_rec_discharge(nvedat, bool = TRUE, reshape = FALSE)`
+
+
+#### Arguments
+
+
+- `nvedat` A NVE data set (`data.table`/`data.frame`)
+- `bool` A boolean
+  + `TRUE` Transforms discharge measurements into either `0`or `1` based on data availability
+  + `FALSE` Keeps original discharge measurements
+- `reshape` A boolean.
+  + `TRUE` Inherits `reshape_rec_discharge()`: Melts the data to a format more suitable for plotting. Must be used with `bool = TRUE`, otherwise the function raises an error
+  + `FALSE` Keeps the wide format of the data
+
+
+#### Return
+
+Either
+
+- A `data.table` with with date and stations as variables. Each row corresponds to a measurement on a given date for a given station. Value is `qt` if data are recorded on the given day, `NA` else.
+- A `data.table` with date and stations as variables. Each row corresponds to a measurement on a given date for a given station. Value is `1` if data are recorded on the given day, `0` else.
+- A `data.table` with four variables:
+  + `date` A date: The given date
+  + `stat` A character: Station ID
+  + `val` A numeric boolean: `1` if data are recorded on the combination of date and station, `0` else
+  + `year` An integer: Year of measurement
+  
+---
+
+### `reshape_rec_discharge()`
+**Melt data created by `make_rec_discharge()` onto a format more suitable for plotting**
+
+
+#### Description
+Reshapes the "wide" format returned default by `make_rec_discharge()` onto a "long" format, suited for plotting with `ggplot()`. Redundant if input is created with the `reshape = TRUE` argument in `make_rec_discharge()`.
+
+
+#### Usage
+
+`reshape_rec_discharge(nvedat.rec)`
+
+
+#### Arguments
+
+- `nvedat.rec` A `data.table` created by `make_rec_discharge()`.
+
+#### Return
+
+
+- A `data.table` with four variables:
+  + `date` A date: The given date
+  + `stat` A character: Station ID
+  + `val` A numeric boolean: `1` if data are recorded on the combination of date and station, `0` else
+  + `year` An integer: Year of measurement
+  
+  
+---
+
+### `plot_rec_discharge()`
+**Plot an overview of discharge data availability**
+
+
+#### Description
+
+Create a heatmap-like figure indicating if there exists discharge measurements for a combination of date and discharge.
+
+
+#### Usage
+
+`plot_rec_discharge(nvedat.long, x_break = "2 year", x_lab = "%Y")`
+
+
+#### Arguments
+
+- `nvedat.long` A `data.table` returned either by `make_rec_discharge()` or `reshape_rec_discharge()`
+- `x_break` A character: Determines the x-axis interval breaks
+- `x_lab` A character: Determines the date format on x-axis labels
+
+
+#### Return
+
+A list (`ggplot`-object).
+
+
+---
+
+### `subset_discharge()`
+**Retrieve overlapping discharge measurements**
+
+#### Description
+Subsets a NVE data by removing years and stations containing a lot of missing data. Works by splicing discharge data across specified years for stations containing less "missing days" than a certain threshold. 
+
+#### Usage
+
+`subset_discharge(nvedat, nvedat.long, min_year = 1985, day_threshold = 350, remove_missing = FALSE)`
+
+#### Arguments
+
+- `nvedat` A NVE data set
+- `nvedat.long` A `data.table` returned either by `make_rec_discharge()` or `reshape_rec_discharge()`
+- `min_year` An integer between 1869 and 2022. Specifies which date interval to subset from (XXXX-2022)
+- `day_threshold` An integer between 1 and 366. Determines the allowed number of "missing days"
+- `remove_missing` A boolean. Not yet implemented.
+
+
+#### Return
+
+A NVE data set (`data.table`/`data.frame`)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

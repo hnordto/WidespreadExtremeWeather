@@ -1204,8 +1204,18 @@ margin-left: 0 !important;
 Documentation</a></h2>
     <div id="toc">
       <ul>
+      <li><a href="#special-data-types" id="toc-special-data-types">Special data types</a>
+      <ul>
+      <li><a href="#nve-data-set" id="toc-nve-data-set"><code>NVE data set</code></a></li>
+      </ul></li>
+      <li><a href="#pre-processing-functions" id="toc-pre-processing-functions">Pre-processing functions</a>
+      <ul>
       <li><a href="#filter_region" id="toc-filter_region"><code>filter_region()</code></a></li>
       <li><a href="#make_rec_discharge" id="toc-make_rec_discharge"><code>make_rec_discharge()</code></a></li>
+      <li><a href="#reshape_rec_discharge" id="toc-reshape_rec_discharge"><code>reshape_rec_discharge()</code></a></li>
+      <li><a href="#plot_rec_discharge" id="toc-plot_rec_discharge"><code>plot_rec_discharge()</code></a></li>
+      <li><a href="#subset_discharge" id="toc-subset_discharge"><code>subset_discharge()</code></a></li>
+      </ul></li>
       </ul>
     </div>
     <div id="postamble" data-toggle="wy-nav-shift" class="status">
@@ -1221,34 +1231,84 @@ Nordtorp</p>
    
 <!-- Don't indent these lines or it will mess pre blocks indentation --> 
 <div id="main">
+<div id="special-data-types" class="section level2">
+<h2>Special data types</h2>
+<p>This section introduces special cases of R data types used throughout
+the code. This includes, but are not limited to, special lists/data
+frames, etc.</p>
+<hr />
+<div id="nve-data-set" class="section level3">
+<h3><code>NVE data set</code></h3>
+<p><strong>Discharge data supplied by The Norwegian Water Resources and
+Energy Directorate (NVE)</strong></p>
+<div id="description" class="section level4">
+<h4>Description</h4>
+<p>A <span class="math inline">\(m \times 15\)</span> data set with
+<span class="math inline">\(m\)</span> discharge measurements on 15
+variables.</p>
+</div>
+<div id="format" class="section level4">
+<h4>Format</h4>
+<ul>
+<li>Variables
+<ul>
+<li><code>drainage_basin_key</code> An integer</li>
+<li><code>stat_id</code> An integer: Measurement station ID</li>
+<li><code>qt</code> A numeric: Discharge (<span class="math inline">\(m^3/s\)</span>)</li>
+<li><code>year</code> An integer: Year of measurement</li>
+<li><code>month</code> An integer: Month of measurement</li>
+<li><code>day</code> An integer: Day of measurement</li>
+<li><code>date</code> A date: Date of measurement</li>
+<li><code>regine_area</code> An integer: ID describing the geographical
+position of the station</li>
+<li><code>main_no</code> An integer</li>
+<li><code>area_total</code> A numeric: Total area</li>
+<li><code>reguleringsgrad_magasin</code> A numeric: the degree of
+regulation in the water reservoir</li>
+<li><code>poly_ind</code> An integer</li>
+<li><code>poly_area</code> A numeric</li>
+<li><code>mean_utmx</code> A numeric: The mean UTM x-coordinate for the
+corresponding area</li>
+<li><code>mean_utmy</code> A numeric.: The mean UTM y-coordinate for the
+corresponding area</li>
+</ul></li>
+</ul>
+<hr />
+</div>
+</div>
+</div>
+<div id="pre-processing-functions" class="section level2">
+<h2>Pre-processing functions</h2>
+<p>These functions are found in the <code>preprocess_discharge.R</code>
+file.</p>
 <hr />
 <div id="filter_region" class="section level3">
 <h3><code>filter_region()</code></h3>
 <p><strong>Subset discharge data based on geographical
 region</strong></p>
-<div id="description" class="section level4">
+<div id="description-1" class="section level4">
 <h4>Description</h4>
 <p><code>filter_region()</code> subsets a NVE discharge data set based
 on desired Norwegian geographical region.</p>
 </div>
 <div id="usage" class="section level4">
 <h4>Usage</h4>
-<p><code>filter_region(nvedata, region = &quot;east&quot;)</code></p>
+<p><code>filter_region(nvedat, region = &quot;east&quot;)</code></p>
 </div>
 <div id="arguments" class="section level4">
 <h4>Arguments</h4>
 <ul>
-<li><code>nvedata</code> A NVE data set
+<li><code>nvedat</code> A NVE data set
 (<code>data.table</code>/<code>data.frame</code>)</li>
 <li><code>region</code> A character. Defaults to <code>&quot;east&quot;</code>.
 Allowed values:
 <ul>
-<li><code>&quot;east&quot;</code>: Corresponding to regine area 1-16, 311</li>
-<li><code>&quot;south&quot;</code>: Corresponding to regine area 17-18</li>
-<li><code>&quot;west&quot;</code>: Corresponding to regine area 29-119</li>
-<li><code>&quot;mid&quot;</code>: Corresponding to regine area 120-189, 307,
+<li><code>&quot;east&quot;</code> Corresponding to regine area 1-16, 311</li>
+<li><code>&quot;south&quot;</code> Corresponding to regine area 17-18</li>
+<li><code>&quot;west&quot;</code> Corresponding to regine area 29-119</li>
+<li><code>&quot;mid&quot;</code> Corresponding to regine area 120-189, 307,
 308</li>
-<li><code>&quot;north&quot;</code>: Corresponding to regine area 190-247</li>
+<li><code>&quot;north&quot;</code> Corresponding to regine area 190-247</li>
 </ul></li>
 </ul>
 </div>
@@ -1260,7 +1320,165 @@ Allowed values:
 </div>
 <div id="make_rec_discharge" class="section level3">
 <h3><code>make_rec_discharge()</code></h3>
-<p><em>Transform NVE data </em></p>
+<p><strong>Create a data frame representing discharge measurements for
+all dates in the data set</strong></p>
+<div id="description-2" class="section level4">
+<h4>Description</h4>
+<p><code>make_rec_discharge()</code> reshapes the original data frame
+making it easier to work with problems related to available measurements
+and data validity.</p>
+</div>
+<div id="usage-1" class="section level4">
+<h4>Usage</h4>
+<p><code>make_rec_discharge(nvedat, bool = TRUE, reshape = FALSE)</code></p>
+</div>
+<div id="arguments-1" class="section level4">
+<h4>Arguments</h4>
+<ul>
+<li><code>nvedat</code> A NVE data set
+(<code>data.table</code>/<code>data.frame</code>)</li>
+<li><code>bool</code> A boolean
+<ul>
+<li><code>TRUE</code> Transforms discharge measurements into either
+<code>0</code>or <code>1</code> based on data availability</li>
+<li><code>FALSE</code> Keeps original discharge measurements</li>
+</ul></li>
+<li><code>reshape</code> A boolean.
+<ul>
+<li><code>TRUE</code> Inherits <code>reshape_rec_discharge()</code>:
+Melts the data to a format more suitable for plotting. Must be used with
+<code>bool = TRUE</code>, otherwise the function raises an error</li>
+<li><code>FALSE</code> Keeps the wide format of the data</li>
+</ul></li>
+</ul>
+</div>
+<div id="return-1" class="section level4">
+<h4>Return</h4>
+<p>Either</p>
+<ul>
+<li>A <code>data.table</code> with with date and stations as variables.
+Each row corresponds to a measurement on a given date for a given
+station. Value is <code>qt</code> if data are recorded on the given day,
+<code>NA</code> else.</li>
+<li>A <code>data.table</code> with date and stations as variables. Each
+row corresponds to a measurement on a given date for a given station.
+Value is <code>1</code> if data are recorded on the given day,
+<code>0</code> else.</li>
+<li>A <code>data.table</code> with four variables:
+<ul>
+<li><code>date</code> A date: The given date</li>
+<li><code>stat</code> A character: Station ID</li>
+<li><code>val</code> A numeric boolean: <code>1</code> if data are
+recorded on the combination of date and station, <code>0</code>
+else</li>
+<li><code>year</code> An integer: Year of measurement</li>
+</ul></li>
+</ul>
+<hr />
+</div>
+</div>
+<div id="reshape_rec_discharge" class="section level3">
+<h3><code>reshape_rec_discharge()</code></h3>
+<p><strong>Melt data created by <code>make_rec_discharge()</code> onto a
+format more suitable for plotting</strong></p>
+<div id="description-3" class="section level4">
+<h4>Description</h4>
+<p>Reshapes the “wide” format returned default by
+<code>make_rec_discharge()</code> onto a “long” format, suited for
+plotting with <code>ggplot()</code>. Redundant if input is created with
+the <code>reshape = TRUE</code> argument in
+<code>make_rec_discharge()</code>.</p>
+</div>
+<div id="usage-2" class="section level4">
+<h4>Usage</h4>
+<p><code>reshape_rec_discharge(nvedat.rec)</code></p>
+</div>
+<div id="arguments-2" class="section level4">
+<h4>Arguments</h4>
+<ul>
+<li><code>nvedat.rec</code> A <code>data.table</code> created by
+<code>make_rec_discharge()</code>.</li>
+</ul>
+</div>
+<div id="return-2" class="section level4">
+<h4>Return</h4>
+<ul>
+<li>A <code>data.table</code> with four variables:
+<ul>
+<li><code>date</code> A date: The given date</li>
+<li><code>stat</code> A character: Station ID</li>
+<li><code>val</code> A numeric boolean: <code>1</code> if data are
+recorded on the combination of date and station, <code>0</code>
+else</li>
+<li><code>year</code> An integer: Year of measurement</li>
+</ul></li>
+</ul>
+<hr />
+</div>
+</div>
+<div id="plot_rec_discharge" class="section level3">
+<h3><code>plot_rec_discharge()</code></h3>
+<p><strong>Plot an overview of discharge data availability</strong></p>
+<div id="description-4" class="section level4">
+<h4>Description</h4>
+<p>Create a heatmap-like figure indicating if there exists discharge
+measurements for a combination of date and discharge.</p>
+</div>
+<div id="usage-3" class="section level4">
+<h4>Usage</h4>
+<p><code>plot_rec_discharge(nvedat.long, x_break = &quot;2 year&quot;, x_lab = &quot;%Y&quot;)</code></p>
+</div>
+<div id="arguments-3" class="section level4">
+<h4>Arguments</h4>
+<ul>
+<li><code>nvedat.long</code> A <code>data.table</code> returned either
+by <code>make_rec_discharge()</code> or
+<code>reshape_rec_discharge()</code></li>
+<li><code>x_break</code> A character: Determines the x-axis interval
+breaks</li>
+<li><code>x_lab</code> A character: Determines the date format on x-axis
+labels</li>
+</ul>
+</div>
+<div id="return-3" class="section level4">
+<h4>Return</h4>
+<p>A list (<code>ggplot</code>-object).</p>
+<hr />
+</div>
+</div>
+<div id="subset_discharge" class="section level3">
+<h3><code>subset_discharge()</code></h3>
+<p><strong>Retrieve overlapping discharge measurements</strong></p>
+<div id="description-5" class="section level4">
+<h4>Description</h4>
+<p>Subsets a NVE data by removing years and stations containing a lot of
+missing data. Works by splicing discharge data across specified years
+for stations containing less “missing days” than a certain
+threshold.</p>
+</div>
+<div id="usage-4" class="section level4">
+<h4>Usage</h4>
+<p><code>subset_discharge(nvedat, nvedat.long, min_year = 1985, day_threshold = 350, remove_missing = FALSE)</code></p>
+</div>
+<div id="arguments-4" class="section level4">
+<h4>Arguments</h4>
+<ul>
+<li><code>nvedat</code> A NVE data set</li>
+<li><code>nvedat.long</code> A <code>data.table</code> returned either
+by <code>make_rec_discharge()</code> or
+<code>reshape_rec_discharge()</code></li>
+<li><code>min_year</code> An integer between 1869 and 2022. Specifies
+which date interval to subset from (XXXX-2022)</li>
+<li><code>day_threshold</code> An integer between 1 and 366. Determines
+the allowed number of “missing days”</li>
+<li><code>remove_missing</code> A boolean. Not yet implemented.</li>
+</ul>
+</div>
+<div id="return-4" class="section level4">
+<h4>Return</h4>
+<p>A NVE data set (<code>data.table</code>/<code>data.frame</code>)</p>
+</div>
+</div>
 </div>
 </div>
 
