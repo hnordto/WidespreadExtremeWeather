@@ -112,11 +112,12 @@ plot_rec_discharge = function(nvedat.long,
   # Plot
   p <- ggplot(nvedat.long, aes(x = date, y = stat)) +
     geom_raster(aes(fill = val)) +
-    scale_fill_manual(values = c("white", "blue"), labels = c("NO", "YES")) +
+    scale_fill_manual(values = c("lightgray", "blue"), labels = c("NO", "YES")) +
     scale_x_date(breaks = x_break, date_labels = x_lab) +
     labs(title = "Discharge measured (YES/NO)",
          x = "Date",
-         y = "Station") +
+         y = "Station",
+         fill = "Value") +
     theme_bw() +
     theme(legend.position = "bottom",
           axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
@@ -172,6 +173,9 @@ subset_discharge <- function(nvedat,
   # Merge with all possible dates in interval
   alldates = data.table("date"=seq(min(data$date), max(data$date), by = 1))
   data = merge(alldates, data, by = c("date"), all.x = TRUE)
+  
+  # Remove ducplicates
+  data = data[!duplicated(data),]
   
   return(data)
 }
