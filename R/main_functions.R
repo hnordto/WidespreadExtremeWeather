@@ -21,7 +21,7 @@ extreme_events = function(data,
   # Iterate through all locations
   for (i in 1:length(uniquestations)) {
     
-    # Retrieve location and the location-spefific extreme threshold
+    # Retrieve location and the location-specific extreme threshold
     this.station = data[stat_id == uniquestations[i]]
     this.threshold = extreme_thresholds[stat_id == uniquestations[i]]$us
     
