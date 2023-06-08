@@ -264,6 +264,36 @@ A `data.table` with 3 variables:
 
 ---
 
+## Plot Functions
+
+These functions are found in the `plot_functions.R` file.
+
+---
+
+### `plot_discharge()`
+
+**Plot discharge for specified stations over time**
+
+#### Description
+
+Plots a line diagram visualizing discharge measurements over the time span of the inputted data set.
+
+#### Usage
+
+`plot_discharge(nvedat, stations = c(200025, 200145, 200604, 1200097), thresholds = NULL)`
+
+#### Arguments
+
+- `nvedat` A NVE data set
+  + Preferably processed with `subset_discharge()` or similar
+- `stations` List of integers. Stations that will be included in the plot.
+- `thresholds` A `data.table` created by `extreme.threshold()` or `NULL` (default). 
+  + `NULL` will cause the function to skip plotting of extreme thresholds
+
+#### Return
+
+A list (`ggplot`-object)
+
 
 
 

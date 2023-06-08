@@ -1508,6 +1508,17 @@ Documentation</li>
           <li><a href="#return-6" id="toc-return-6">Return</a></li>
           </ul></li>
           </ul></li>
+          <li><a href="#plot-functions" id="toc-plot-functions">Plot
+          Functions</a>
+          <ul>
+          <li><a href="#plot_discharge" id="toc-plot_discharge"><code>plot_discharge()</code></a>
+          <ul>
+          <li><a href="#description-8" id="toc-description-8">Description</a></li>
+          <li><a href="#usage-7" id="toc-usage-7">Usage</a></li>
+          <li><a href="#arguments-7" id="toc-arguments-7">Arguments</a></li>
+          <li><a href="#return-7" id="toc-return-7">Return</a></li>
+          </ul></li>
+          </ul></li>
           </ul>
         </nav>
         <ul class="authors">
@@ -1866,6 +1877,47 @@ if <code>extreme_thresholds = NULL</code>.</li>
 event</li>
 </ul>
 <hr />
+</div>
+</div>
+</div>
+<div id="plot-functions" class="section level2">
+<h2>Plot Functions</h2>
+<p>These functions are found in the <code>plot_functions.R</code>
+file.</p>
+<hr />
+<div id="plot_discharge" class="section level3">
+<h3><code>plot_discharge()</code></h3>
+<p><strong>Plot discharge for specified stations over time</strong></p>
+<div id="description-8" class="section level4">
+<h4>Description</h4>
+<p>Plots a line diagram visualizing discharge measurements over the time
+span of the inputted data set.</p>
+</div>
+<div id="usage-7" class="section level4">
+<h4>Usage</h4>
+<p><code>plot_discharge(nvedat, stations = c(200025, 200145, 200604, 1200097), thresholds = NULL)</code></p>
+</div>
+<div id="arguments-7" class="section level4">
+<h4>Arguments</h4>
+<ul>
+<li><code>nvedat</code> A NVE data set
+<ul>
+<li>Preferably processed with <code>subset_discharge()</code> or
+similar</li>
+</ul></li>
+<li><code>stations</code> List of integers. Stations that will be
+included in the plot.</li>
+<li><code>thresholds</code> A <code>data.table</code> created by
+<code>extreme.threshold()</code> or <code>NULL</code> (default).
+<ul>
+<li><code>NULL</code> will cause the function to skip plotting of
+extreme thresholds</li>
+</ul></li>
+</ul>
+</div>
+<div id="return-7" class="section level4">
+<h4>Return</h4>
+<p>A list (<code>ggplot</code>-object)</p>
 </div>
 </div>
 </div>
