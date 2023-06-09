@@ -103,3 +103,17 @@ for (i in 1:length(main.events)) {
   
 }
 
+mat |> as.data.frame() |> 
+  rownames_to_column("stat") |> 
+  pivot_longer(-stat, names_to = "date", values_to = "val") |> 
+  ggplot(aes(x = date, y = stat)) +
+  geom_raster(aes(fill = factor(val))) +
+  scale_fill_manual(values = c("lightgray", "blue"), labels = c("NO", "YES")) +
+  labs(title = "Extreme event (YES/NO)",
+       x = "Timepoint of main event",
+       y = "Station",
+       fill = "Value") +
+  theme_bw() +
+  theme(legend.position = "bottom",
+        axis.text.x = element_blank())
+
