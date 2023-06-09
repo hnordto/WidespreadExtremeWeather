@@ -42,3 +42,7 @@ extreme_events = function(data,
   return(as.data.table(extreme.events))
   
 }
+
+time_threshold = function(deltaT) {
+  return(deltaT)
+}
