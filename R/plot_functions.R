@@ -45,3 +45,29 @@ plot_discharge = function(nvedat,
   
   return(p)
 }
+
+
+plot_event_matrix = function(mat) {
+  
+  mat.df = as.data.frame(mat)
+  mat.df = rownames_to_column(mat.df, "stat_id")
+  mat.df = pivot_longer(mat.df, -stat_id, names_to = "date", values_to = "val")
+  
+  p = ggplot(mat.df, aes(x = date, y = stat_id)) +
+    geom_raster(aes(fill = factor(val))) +
+    scale_fill_manual(values = c("gray90", "dodgerblue"), labels = c("NO", "YES")) +
+    labs(title = "Extreme event (YES/NO)",
+         subtitle = paste0("Per station and main event in time period ", 
+                           min(year(mat.df$date)),
+                           "-",
+                           max(year(mat.df$date))),
+         x = "Timepoint of main event",
+         y = "Station",
+         fill = "Extreme event") +
+    theme_bw() +
+    theme(legend.position = "bottom",
+          axis.text.x = element_blank())
+  
+  return(p)
+  
+}
