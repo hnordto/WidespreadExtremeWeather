@@ -1,4 +1,7 @@
 
+library(data.table)
+library(tidyverse)
+
 # Create a suitable discharge data set
 source("dev/discharge_intervals.R")
 
@@ -20,7 +23,8 @@ plot_discharge(discharge.data, thresholds = thresholds)
 extreme.events |> 
   group_by(date) |> 
   summarise(Freq = n()) |> 
-  arrange(desc(Freq)) -> test
+  arrange(desc(Freq)) |> 
+  as.data.table() -> test
 
 day_threshold = 7
 
@@ -42,7 +46,7 @@ for (i in 1:nrow(test)) {
 test2 = merge(extreme.events, test, by = "date", all.x = T)
 test2 = test2 |> arrange(desc(Freq)) |> as.data.table()
 
-uniqueevnts = as.character(unique(test$date))
+uniqueevents = as.character(unique(test$date))
 
 day_threshold = 7
 
@@ -108,12 +112,15 @@ mat |> as.data.frame() |>
   pivot_longer(-stat, names_to = "date", values_to = "val") |> 
   ggplot(aes(x = date, y = stat)) +
   geom_raster(aes(fill = factor(val))) +
-  scale_fill_manual(values = c("lightgray", "blue"), labels = c("NO", "YES")) +
+  scale_fill_manual(values = c("gray90", "dodgerblue"), labels = c("NO", "YES")) +
   labs(title = "Extreme event (YES/NO)",
        x = "Timepoint of main event",
        y = "Station",
        fill = "Value") +
   theme_bw() +
   theme(legend.position = "bottom",
-        axis.text.x = element_blank())
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+
+# Sensitivity analysis
 
