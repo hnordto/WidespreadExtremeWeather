@@ -7,7 +7,7 @@
 
         <meta name="author" content="Henrik Nordtorp" />
     
-        <meta name="date" content="2023-06-08" />
+        <meta name="date" content="2023-06-12" />
     
     <title>Widespread Extreme Weather Documentation</title>
 
@@ -1507,16 +1507,37 @@ Documentation</li>
           <li><a href="#arguments-6" id="toc-arguments-6">Arguments</a></li>
           <li><a href="#return-6" id="toc-return-6">Return</a></li>
           </ul></li>
+          <li><a href="#main_events" id="toc-main_events"><code>main_events()</code></a>
+          <ul>
+          <li><a href="#description-8" id="toc-description-8">Description</a></li>
+          <li><a href="#usage-7" id="toc-usage-7">Usage</a></li>
+          <li><a href="#arguments-7" id="toc-arguments-7">Arguments</a></li>
+          <li><a href="#return-7" id="toc-return-7">Return</a></li>
+          </ul></li>
+          <li><a href="#event_matrix" id="toc-event_matrix"><code>event_matrix()</code></a>
+          <ul>
+          <li><a href="#description-9" id="toc-description-9">Description</a></li>
+          <li><a href="#usage-8" id="toc-usage-8">Usage</a></li>
+          <li><a href="#arguments-8" id="toc-arguments-8">Arguments</a></li>
+          <li><a href="#return-8" id="toc-return-8">Return</a></li>
+          </ul></li>
           </ul></li>
           <li><a href="#plot-functions" id="toc-plot-functions">Plot
           Functions</a>
           <ul>
           <li><a href="#plot_discharge" id="toc-plot_discharge"><code>plot_discharge()</code></a>
           <ul>
-          <li><a href="#description-8" id="toc-description-8">Description</a></li>
-          <li><a href="#usage-7" id="toc-usage-7">Usage</a></li>
-          <li><a href="#arguments-7" id="toc-arguments-7">Arguments</a></li>
-          <li><a href="#return-7" id="toc-return-7">Return</a></li>
+          <li><a href="#description-10" id="toc-description-10">Description</a></li>
+          <li><a href="#usage-9" id="toc-usage-9">Usage</a></li>
+          <li><a href="#arguments-9" id="toc-arguments-9">Arguments</a></li>
+          <li><a href="#return-9" id="toc-return-9">Return</a></li>
+          </ul></li>
+          <li><a href="#plot_event_matrix" id="toc-plot_event_matrix"><code>plot_event_matrix()</code></a>
+          <ul>
+          <li><a href="#description-11" id="toc-description-11">Description</a></li>
+          <li><a href="#usage-10" id="toc-usage-10">Usage</a></li>
+          <li><a href="#arguments-10" id="toc-arguments-10">Arguments</a></li>
+          <li><a href="#return-10" id="toc-return-10">Return</a></li>
           </ul></li>
           </ul></li>
           </ul>
@@ -1525,7 +1546,7 @@ Documentation</li>
           <li class="divider"></li>
                                 <li><span><i class="glyphicon glyphicon-user"></i> Henrik
 Nordtorp</span></li>
-                                         <li><span><i class="glyphicon glyphicon-calendar"></i> 2023-06-08</span></li>
+                                         <li><span><i class="glyphicon glyphicon-calendar"></i> 2023-06-12</span></li>
                   </ul>     
       </div>
       <div class="book-body fixed">
@@ -1879,6 +1900,74 @@ event</li>
 <hr />
 </div>
 </div>
+<div id="main_events" class="section level3">
+<h3><code>main_events()</code></h3>
+<p><strong>Identify main events</strong></p>
+<div id="description-8" class="section level4">
+<h4>Description</h4>
+<p>Identifies main extreme weather events based on similar methods as
+Brunner et al. (2020).</p>
+</div>
+<div id="usage-7" class="section level4">
+<h4>Usage</h4>
+<p><code>main_events(extreme.events, day_threshold = 7)</code></p>
+</div>
+<div id="arguments-7" class="section level4">
+<h4>Arguments</h4>
+<ul>
+<li><code>extreme.events</code> A data frame (or
+<code>data.table</code>) returned by <code>extreme_events()</code></li>
+<li><code>day_threshold</code> An integer: Minimum time between two main
+events</li>
+</ul>
+</div>
+<div id="return-7" class="section level4">
+<h4>Return</h4>
+<p>A list with dates: The timepoints of the main events.</p>
+<hr />
+</div>
+</div>
+<div id="event_matrix" class="section level3">
+<h3><code>event_matrix()</code></h3>
+<p><strong>Create a binary matrix mapping extreme weather events to main
+events</strong></p>
+<div id="description-9" class="section level4">
+<h4>Description</h4>
+<p>Creates a spatial binary matrix mapping location-specific extreme
+weather events to the main events. Based on a similar method as used by
+Brunner et al. (2020)</p>
+</div>
+<div id="usage-8" class="section level4">
+<h4>Usage</h4>
+<p><code>event_matrix(main.events, extreme.events, deltaT = 2)</code></p>
+</div>
+<div id="arguments-8" class="section level4">
+<h4>Arguments</h4>
+<ul>
+<li><code>extreme.events</code> A data frame returned by
+<code>extreme_events()</code></li>
+<li><code>main.events</code> A data frame returned by
+<code>main_events()</code></li>
+<li><code>deltaT</code> An integer: The dependency threshold. Determines
+how “close” an extreme event should be to a main event to be considered
+the same event.</li>
+</ul>
+</div>
+<div id="return-8" class="section level4">
+<h4>Return</h4>
+<p>A <span class="math inline">\(n \times m\)</span> matrix <span class="math inline">\(A\)</span>, where <span class="math display">\[
+\begin{aligned}
+&amp;n \ \text{is the number of locations}\\
+&amp;m \ \text{is the number of main events} \\
+&amp;A_{ij}=\begin{cases}0, &amp; \text{if location} \ i \
+\text{experienced an extreme event independent of main event} \ j \\
+1, &amp; \text{if location} \ i \ \text{experienced an extreme event
+dependent of main event} \ j\end{cases}
+\end{aligned}
+\]</span></p>
+<hr />
+</div>
+</div>
 </div>
 <div id="plot-functions" class="section level2">
 <h2>Plot Functions</h2>
@@ -1888,16 +1977,16 @@ file.</p>
 <div id="plot_discharge" class="section level3">
 <h3><code>plot_discharge()</code></h3>
 <p><strong>Plot discharge for specified stations over time</strong></p>
-<div id="description-8" class="section level4">
+<div id="description-10" class="section level4">
 <h4>Description</h4>
 <p>Plots a line diagram visualizing discharge measurements over the time
 span of the inputted data set.</p>
 </div>
-<div id="usage-7" class="section level4">
+<div id="usage-9" class="section level4">
 <h4>Usage</h4>
 <p><code>plot_discharge(nvedat, stations = c(200025, 200145, 200604, 1200097), thresholds = NULL)</code></p>
 </div>
-<div id="arguments-7" class="section level4">
+<div id="arguments-9" class="section level4">
 <h4>Arguments</h4>
 <ul>
 <li><code>nvedat</code> A NVE data set
@@ -1915,9 +2004,34 @@ extreme thresholds</li>
 </ul></li>
 </ul>
 </div>
-<div id="return-7" class="section level4">
+<div id="return-9" class="section level4">
 <h4>Return</h4>
-<p>A list (<code>ggplot</code>-object)</p>
+<p>A list (<code>ggplot</code> object)</p>
+<hr />
+</div>
+</div>
+<div id="plot_event_matrix" class="section level3">
+<h3><code>plot_event_matrix()</code></h3>
+<p><strong>Plot overview of binary extreme event matrices</strong></p>
+<div id="description-11" class="section level4">
+<h4>Description</h4>
+<p>Plots a heatmap-like plot visualizing extreme event per location and
+main event.</p>
+</div>
+<div id="usage-10" class="section level4">
+<h4>Usage</h4>
+<p><code>plot_event_matrix(mat)</code></p>
+</div>
+<div id="arguments-10" class="section level4">
+<h4>Arguments</h4>
+<ul>
+<li><code>mat</code>: A binary matrix returned by
+<code>event_matrix()</code></li>
+</ul>
+</div>
+<div id="return-10" class="section level4">
+<h4>Return</h4>
+<p>A list (<code>ggplot</code> object)</p>
 </div>
 </div>
 </div>

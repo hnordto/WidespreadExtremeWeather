@@ -264,6 +264,62 @@ A `data.table` with 3 variables:
 
 ---
 
+### `main_events()`
+
+**Identify main events**
+
+#### Description
+
+Identifies main extreme weather events based on similar methods as Brunner et al. (2020).
+
+#### Usage
+
+`main_events(extreme.events, day_threshold = 7)`
+
+#### Arguments
+
+
+- `extreme.events` A data frame (or `data.table`) returned by `extreme_events()`
+- `day_threshold` An integer: Minimum time between two main events
+
+#### Return
+
+A list with dates: The timepoints of the main events.
+
+---
+
+### `event_matrix()`
+
+**Create a binary matrix mapping extreme weather events to main events**
+
+#### Description
+
+Creates a spatial binary matrix mapping location-specific extreme weather events to the main events. Based on a similar method as used by Brunner et al. (2020)
+
+#### Usage
+
+`event_matrix(main.events, extreme.events, deltaT = 2)`
+
+#### Arguments
+
+- `extreme.events` A data frame returned by `extreme_events()`
+- `main.events` A data frame returned by `main_events()`
+- `deltaT` An integer: The dependency threshold. Determines how "close" an extreme event should be to a main event to be considered the same event.
+
+#### Return
+
+A $n \times m$ matrix $A$, where
+$$
+\begin{aligned}
+&n \ \text{is the number of locations}\\
+&m \ \text{is the number of main events} \\
+&A_{ij}=\begin{cases}0, & \text{if location} \ i \ \text{experienced an extreme event independent of main event} \ j \\
+1, & \text{if location} \ i \ \text{experienced an extreme event dependent of main event} \ j\end{cases}
+\end{aligned}
+$$
+
+---
+
 ## Plot Functions
 
 These functions are found in the `plot_functions.R` file.
@@ -292,7 +348,32 @@ Plots a line diagram visualizing discharge measurements over the time span of th
 
 #### Return
 
-A list (`ggplot`-object)
+A list (`ggplot` object)
+
+
+---
+
+### `plot_event_matrix()`
+
+**Plot overview of binary extreme event matrices**
+
+
+#### Description
+
+Plots a heatmap-like plot visualizing extreme event per location and main event.
+
+
+#### Usage
+
+`plot_event_matrix(mat)`
+
+#### Arguments
+
+- `mat`: A binary matrix returned by `event_matrix()`
+
+#### Return
+
+A list (`ggplot` object)
 
 
 

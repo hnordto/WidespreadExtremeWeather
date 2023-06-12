@@ -49,10 +49,16 @@ plot_discharge = function(nvedat,
 
 plot_event_matrix = function(mat) {
   
+  # Convert matrix to data frame
   mat.df = as.data.frame(mat)
+  
+  # Create column with station IDs from rownames
   mat.df = rownames_to_column(mat.df, "stat_id")
+  
+  # Melt data frame to a more suitable format for plotting
   mat.df = pivot_longer(mat.df, -stat_id, names_to = "date", values_to = "val")
   
+  # Plot
   p = ggplot(mat.df, aes(x = date, y = stat_id)) +
     geom_raster(aes(fill = factor(val))) +
     scale_fill_manual(values = c("gray90", "dodgerblue"), labels = c("NO", "YES")) +

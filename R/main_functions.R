@@ -43,35 +43,44 @@ extreme_events = function(data,
   
 }
 
-time_threshold = function(deltaT) {
-  return(deltaT)
-}
 
 main_events = function(extreme.events,
                        day_threshold = 7) {
+  
+  # Compute location-frequencies of each extreme event
   event.frequencies = extreme.events[,.(Freq = .N), by = date]
   setorder(event.frequencies, cols = - Freq)
   
+  # Retrieve all unique events
   uniqueevents = as.character(event.frequencies$date)
   
+  # Iterate over all unique events
+  # The order of the data frame ensures that events with the highest location-
+  # -frequencies are prioritized when appending to main events list
   for (i in 1:length(uniqueevents)) {
+    # Retrieve event
     event = event.frequencies[date == uniqueevents[i]]
     
     event.freq = event$Freq
     
+    # Create a time interval around the event corresponding to day_threshold
     event.range.lower = as.Date(event$date) - days(day_threshold)
     event.range.upper = as.Date(event$date) + days(day_threshold)
     event.range = seq(event.range.lower, event.range.upper, by = 1)
     
+    # Check if multiple events in the time interval have equal location-frequencies
     proximity.events = event.frequencies[date %in% event.range]
     alternative.event = proximity.events[Freq == event.freq]
     
+    # Keep event according to 50th-quantile criteria
     event.to.keep = quantile(alternative.event$date, p = .5, type = 1)
     event.to.keep = as.Date(event.to.keep)
     
+    # Add to main event list
     if (i == 1) {
       main.events = event.to.keep
     } else {
+      # Only add if the event is further away from an existing main event than day_threshold
       if (!any(abs(difftime(event.to.keep, main.events, units = "days")) < day_threshold)) {
         main.events = c(main.events, event.to.keep)
       }
@@ -86,24 +95,37 @@ event_matrix = function(main.events,
                         extreme.events,
                         deltaT = 2) {
   
+  # Retrieve all unique locations
   allstations = unique(extreme.events$stat_id)
   
+  # Create empty matrix with dimension: location x main events
   mat = matrix(data = NA,
                nrow = length(allstations),
                ncol = length(main.events))
   
+  # Set row- and column names
   rownames(mat) = allstations
   colnames(mat) = as.character(main.events)
   
+  # Iterate over all main events (columns)
   for (i in 1:length(main.events)) {
+    
+    # Retrieve main event
     this.event = main.events[i]
+    
+    # Create a time interval around the event corresponding to deltaT
     event.range.lower = as.Date(this.event) - days(deltaT)
     event.range.upper = as.Date(this.event) + days(deltaT)
     event.range = seq(event.range.lower, event.range.upper, by = 1)
     
+    # Iterate over all locations (row)
     for (j in 1:length(allstations)) {
+      
+      # Retrieve location
       this.station = extreme.events[stat_id == allstations[j]]
       
+      # Set matrix entries according to whether the location has an extreme event
+      # plus-minus deltaT away from the main event date
       if (any(this.station$date %in% event.range)) {
         mat[j, i] = 1
       } else {
