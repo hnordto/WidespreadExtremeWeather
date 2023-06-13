@@ -122,5 +122,76 @@ mat |> as.data.frame() |>
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 
 
-# Sensitivity analysis
+# Sensitivity analysis (ish)
 
+extreme.thresholds = extreme_threshold(discharge.data, probs = .9)
+extreme.events = extreme_events(discharge.data, extreme.thresholds)
+main.events = main_events(extreme.events)
+mat = event_matrix(main.events, extreme.events)
+
+
+getwd()day_thresholds = seq(1, 31, by = 1)
+deltaTs = seq(1, 10, by = 1)
+
+
+n.main.events.df = data.table(threshold = integer(),
+                              n = integer())
+for (i in 1:length(day_thresholds)) {
+  threshold = day_thresholds[i]
+  main.events = main_events(extreme.events, day_threshold = threshold)
+  n.main.events = length(main.events)
+  
+  n.main.events.df.temp = data.table(threshold = threshold,
+                                     n = n.main.events)
+  
+  n.main.events.df = rbind(n.main.events.df, n.main.events.df.temp)
+  
+}
+
+ggplot(n.main.events.df, aes(x = threshold, y = n)) +
+  geom_col(fill = "dodgerblue", colour = "black") +
+  geom_text(aes(label=n), colour = "gray90", position = position_dodge(width=0.9), vjust=2) +
+  theme_bw()
+
+
+
+# Test different thresholds
+
+extreme.thresholds.range = c(0.5, 0.6, 0.7, 0.8, 0.9, 0.925, 0.95, 0.975, 0.99)
+
+store = data.table(mu = numeric(),
+                   r = numeric(),
+                   n = integer())
+
+for (i in 1:length(extreme.thresholds.range)) {
+  this.threshold = extreme.thresholds.range[i]
+  
+  extreme.threshold = extreme_threshold(discharge.data, probs = this.threshold)
+  
+  extreme.events = extreme_events(discharge.data, extreme_thresholds = extreme.threshold)
+  
+  main.events = main_events(extreme.events)
+  
+  mat = event_matrix(main.events, extreme.events)
+  
+  r.to.test = c(0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
+  
+  for (j in 1:length(r.to.test)) {
+    this.r = r.to.test[j]
+    
+    event.freq = colMeans(mat) |> as.vector()
+    n.over.r = sum(event.freq >= this.r)
+    
+    store.temp = data.table(mu = this.threshold,
+                            r = this.r,
+                            n = n.over.r)
+    store = rbind(store, store.temp)
+    
+  }
+}
+
+ggplot(store, aes(x = mu, y = n, group = r)) +
+  geom_line(aes(colour = factor(r)), size = 1.2) +
+  geom_point(colour = "gray50", size = 1.5) +
+  theme_bw() +
+  theme(legend.position = "bottom")
