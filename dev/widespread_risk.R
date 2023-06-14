@@ -6,9 +6,23 @@ library(tidyverse)
 source("dev/discharge_intervals.R")
 
 # Declare functions needed
+source("R/preprocess_discharge.R")
 source("R/main_functions.R")
 source("R/plot_functions.R")
 
+# ---- Load and preprocess data ----
+
+discharge = load_data()
+discharge = discharge$discharge
+
+discharge.east = filter_region(discharge)
+discharge.east.long = make_rec_discharge(discharge.east, reshape = T)
+
+discharge.data = subset_discharge(discharge.east,
+                                  discharge.east.long,
+                                  day_threshold = 364)
+
+# ---- Identify extreme events ----
 # Compute extreme thresholds
 thresholds = extreme_threshold(discharge.data, probs = .9)
 
@@ -18,119 +32,21 @@ extreme.events = extreme_events(discharge.data, thresholds)
 
 plot_discharge(discharge.data, thresholds = thresholds)
 
-# MAIN EVENT IDENTIFICATION
+# ---- Identify main events ----
 
-extreme.events |> 
-  group_by(date) |> 
-  summarise(Freq = n()) |> 
-  arrange(desc(Freq)) |> 
-  as.data.table() -> test
-
-day_threshold = 7
-
-# Does not work, only for testing!
-for (i in 1:nrow(test)) {
-  if (i == 1) {
-    main_events = test[i,]
-  } else {
-    last_event = tail(main_events, n = 1)
-    main_events_potential = test[i,]
-    
-    if (abs(difftime(main_events_potential$date, last_event$date, units = "days")) > day_threshold) {
-      main_events = rbind(main_events, main_events_potential)
-    }
-    
-  }
-}
-
-test2 = merge(extreme.events, test, by = "date", all.x = T)
-test2 = test2 |> arrange(desc(Freq)) |> as.data.table()
-
-uniqueevents = as.character(unique(test$date))
-
-day_threshold = 7
-
-main.events <- c()
-for (i in 1:length(uniqueevents)) {
-  event = test[date == uniqueevents[i]]
-  
-  event.freq = event$Freq
-  
-  event.range.lower = as.Date(event$date) - days(day_threshold)
-  event.range.upper = as.Date(event$date) + days(day_threshold)
-  event.range = seq(event.range.lower, event.range.upper, by = 1)
-  
-  proximity.events = test[date %in% event.range]
-  alternative.event = proximity.events[Freq == event.freq]
-  
-  event.to.keep = quantile(alternative.event$date, p = 0.5, type = 1)
-  event.to.keep = as.Date(event.to.keep)
-  
-  if (i == 1) {
-    main.events <- as.Date(event.to.keep)
-  } else {
-    if (!any(abs(difftime(event.to.keep, main.events, units = "days")) < day_threshold)) {
-      main.events = c(main.events, event.to.keep)
-    }
-  }
-  
-}
-
-### Binary matrix
-
-deltaT = 2
-
-allstations = unique(extreme.events$stat_id)
-
-mat = matrix(data = NA, 
-             nrow = length(allstations),
-             ncol = length(main.events))
-
-rownames(mat) = allstations
-colnames(mat) = as.character(main.events)
-
-for (i in 1:length(main.events)) {
-  this.event = main.events[i]
-  event.range.lower = as.Date(this.event) - days(deltaT)
-  event.range.upper = as.Date(this.event) + days(deltaT)
-  event.range = seq(event.range.lower, event.range.upper, by = 1)
-  
-  for (j in 1:length(allstations)) {
-    this.station = extreme.events[stat_id == allstations[j]]
-    
-    if (any(this.station$date %in% event.range)) {
-      mat[j,i] = 1
-    } else {
-      mat[j,i] = 0
-    }
-  }
-  
-}
-
-mat |> as.data.frame() |> 
-  rownames_to_column("stat") |> 
-  pivot_longer(-stat, names_to = "date", values_to = "val") |> 
-  ggplot(aes(x = date, y = stat)) +
-  geom_raster(aes(fill = factor(val))) +
-  scale_fill_manual(values = c("gray90", "dodgerblue"), labels = c("NO", "YES")) +
-  labs(title = "Extreme event (YES/NO)",
-       x = "Timepoint of main event",
-       y = "Station",
-       fill = "Value") +
-  theme_bw() +
-  theme(legend.position = "bottom",
-        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
-
-
-# Sensitivity analysis (ish)
-
-extreme.thresholds = extreme_threshold(discharge.data, probs = .9)
-extreme.events = extreme_events(discharge.data, extreme.thresholds)
 main.events = main_events(extreme.events)
+
+# ---- Create binary event matrix ---
+
 mat = event_matrix(main.events, extreme.events)
 
+# Note to self: Make this process a pipeline??
 
-getwd()day_thresholds = seq(1, 31, by = 1)
+
+# ---- Test how different day thresholds affect number of main events ----
+
+
+day_thresholds = seq(1, 31, by = 1)
 deltaTs = seq(1, 10, by = 1)
 
 
@@ -154,7 +70,7 @@ ggplot(n.main.events.df, aes(x = threshold, y = n)) +
   theme_bw()
 
 
-
+# ---- Test different extreme thresholds ----
 # Test different thresholds
 
 extreme.thresholds.range = c(0.5, 0.6, 0.7, 0.8, 0.9, 0.925, 0.95, 0.975, 0.99)
@@ -163,35 +79,50 @@ store = data.table(mu = numeric(),
                    r = numeric(),
                    n = integer())
 
-for (i in 1:length(extreme.thresholds.range)) {
-  this.threshold = extreme.thresholds.range[i]
-  
-  extreme.threshold = extreme_threshold(discharge.data, probs = this.threshold)
-  
-  extreme.events = extreme_events(discharge.data, extreme_thresholds = extreme.threshold)
-  
-  main.events = main_events(extreme.events)
-  
-  mat = event_matrix(main.events, extreme.events)
-  
-  r.to.test = c(0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
-  
-  for (j in 1:length(r.to.test)) {
-    this.r = r.to.test[j]
+# Do not run. Load "store.RData" instead.
+if (FALSE) {
+  for (i in 1:length(extreme.thresholds.range)) {
+    this.threshold = extreme.thresholds.range[i]
     
-    event.freq = colMeans(mat) |> as.vector()
-    n.over.r = sum(event.freq >= this.r)
+    extreme.threshold = extreme_threshold(discharge.data, probs = this.threshold)
     
-    store.temp = data.table(mu = this.threshold,
-                            r = this.r,
-                            n = n.over.r)
-    store = rbind(store, store.temp)
+    extreme.events = extreme_events(discharge.data, extreme_thresholds = extreme.threshold)
     
-  }
+    main.events = main_events(extreme.events)
+    
+    mat = event_matrix(main.events, extreme.events)
+    
+    r.to.test = c(0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
+    
+    for (j in 1:length(r.to.test)) {
+      this.r = r.to.test[j]
+      
+      event.freq = colMeans(mat) |> as.vector()
+      n.over.r = sum(event.freq >= this.r)
+      
+      store.temp = data.table(mu = this.threshold,
+                              r = this.r,
+                              n = n.over.r)
+      store = rbind(store, store.temp)
+      
+    }
+  } 
 }
 
+
+# Plot n main events per r% locations affected and different extreme thresholds
+# Not suitable to put this in a separate function
+
 ggplot(store, aes(x = mu, y = n, group = r)) +
-  geom_line(aes(colour = factor(r)), size = 1.2) +
+  geom_line(aes(colour = factor(r)), linewidth = 1.2) +
   geom_point(colour = "gray50", size = 1.5) +
   theme_bw() +
   theme(legend.position = "bottom")
+
+# ---- Maps ----
+
+geo = read_spatial_norway("//ad.nr.no/shares/samba_shared/Sommerstudenter/Henrik/Nyttig/Norgeomriss/")
+
+stations_plot = plot_stations(discharge.east, geo)
+
+

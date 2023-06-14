@@ -2,15 +2,19 @@ require(ggplot2)
 require(rgdal)
 require(sp)
 
-#utm to lon/lat:
-LongLatToUTM<-function(x,y,zone){
+# zone = 33
+UTMToLongLat <- function(x,y,zone){
+  
   xy <- data.frame(ID = 1:length(x), X = x, Y = y)
+  
   coordinates(xy) <- c("X", "Y")
+  
   proj4string(xy) <- CRS(paste("+proj=utm +zone=",zone," ellps=WGS84",sep='')) ## for example
+  
   res <- spTransform(xy, CRS("+proj=longlat +datum=WGS84"))
+  
   return(as.data.frame(res))
-}#
-#zone=33
+}
 
 # Helper function for reading spatial data for Norway
 read_spatial_norway = function(path) {
@@ -43,11 +47,13 @@ plot_stations = function(nvedat,
     geom_point(aes(x = X, y = Y, size = area_total, 
                    colour = reguleringsgrad_magasin),
                data = nvedat.converted.sub) +
-    labs(title = "Overview of Discharge Observation stations Included in Data Set",
+    labs(title = "Overview of Catchments Included in Data Set",
+         subtitle = "Discharge Data",
          x = element_blank(),
          y = element_blank(),
          colour = "Degree of Regulation",
          size = "Total Area") +
+    viridis::scale_color_viridis(option = "turbo") +
     theme_bw() +
     theme(axis.text = element_blank(),
           axis.ticks = element_blank(),
