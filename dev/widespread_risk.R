@@ -125,4 +125,26 @@ geo = read_spatial_norway("//ad.nr.no/shares/samba_shared/Sommerstudenter/Henrik
 
 stations_plot = plot_stations(discharge.east, geo)
 
+# ---- susceptibility index ----
 
+# p(%) = 100 (x/(n+1)) 
+# n is the total number of events affecting at least one of the stations in the region
+# x is the number of events where r% of the stations were affected.
+
+n = ncol(mat)
+
+# Development of helper functions to calculate the number of events where r% of the stations where affected
+
+r = c(0.5)
+
+for (i in 1:length(r)) {
+  this.r = r[i]
+  
+  event.freq = as.vector(colMeans(mat))
+  
+  x.over.r = sum(event.freq >= this.r)
+  
+  x = x.over.r
+}
+
+s.ind = x/(n+1)
