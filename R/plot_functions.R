@@ -1,5 +1,16 @@
 require(ggplot2)
 
+#utm to lon/lat:
+LongLatToUTM<-function(x,y,zone){
+  xy <- data.frame(ID = 1:length(x), X = x, Y = y)
+  coordinates(xy) <- c("X", "Y")
+  proj4string(xy) <- CRS(paste("+proj=utm +zone=",zone," ellps=WGS84",sep='')) ## for example
+  res <- spTransform(xy, CRS("+proj=longlat +datum=WGS84"))
+  return(as.data.frame(res))
+}#
+#zone=33
+
+
 plot_discharge = function(nvedat,
                           stations = c(200025, 200145, 200604, 1200097),
                           thresholds = NULL) {
