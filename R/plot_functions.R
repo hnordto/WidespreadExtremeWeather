@@ -1,4 +1,6 @@
 require(ggplot2)
+require(rgdal)
+require(sp)
 
 #utm to lon/lat:
 LongLatToUTM<-function(x,y,zone){
@@ -9,6 +11,51 @@ LongLatToUTM<-function(x,y,zone){
   return(as.data.frame(res))
 }#
 #zone=33
+
+# Helper function for reading spatial data for Norway
+read_spatial_norway = function(path) {
+  current_wd = getwd()
+  setwd(path)
+  
+  norge = readOGR(dsn = ".", layer = "norge")
+  projection = proj4string(norge)
+  
+  norway.lonlat = spTransform(norge, CRS("+proj=longlat +datum=WGS84"))
+  
+  setwd(current_wd)
+  
+  return(norway.lonlat)
+}
+
+plot_stations = function(nvedat,
+                         norway.lonlat) {
+  utm.x = nvedat$mean_utmx
+  utm.y = nvedat$mean_utmy
+  
+  coords.lonlat = LongLatToUTM(utm.x, utm.y, 33)
+  
+  nvedat.converted = cbind(nvedat, coords.lonlat)
+  nvedat.converted.sub = nvedat.converted[, head(.SD, 1), by = stat_id]
+  
+  p = ggplot() +
+    geom_polygon(aes(x = long, y = lat, group = id), data = norway.lonlat,
+                 fill = "grey90", colour = "grey40") +
+    geom_point(aes(x = X, y = Y, size = area_total, 
+                   colour = reguleringsgrad_magasin),
+               data = nvedat.converted.sub) +
+    labs(title = "Overview of Discharge Observation stations Included in Data Set",
+         x = element_blank(),
+         y = element_blank(),
+         colour = "Degree of Regulation",
+         size = "Total Area") +
+    theme_bw() +
+    theme(axis.text = element_blank(),
+          axis.ticks = element_blank(),
+          panel.grid = element_blank(),
+          legend.position = "right")
+  
+  return(p)
+}
 
 
 plot_discharge = function(nvedat,
