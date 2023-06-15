@@ -67,6 +67,10 @@ for (i in 1:length(day_thresholds)) {
 ggplot(n.main.events.df, aes(x = threshold, y = n)) +
   geom_col(fill = "dodgerblue", colour = "black") +
   geom_text(aes(label=n), colour = "gray90", position = position_dodge(width=0.9), vjust=2) +
+  labs(title = "Number of Identified Main Events",
+       subtitle = "For different main event separation intervals",
+       y = "Number of Main Events",
+       x = "Main Event Separation Value (days)") +
   theme_bw()
 
 
@@ -116,6 +120,11 @@ if (FALSE) {
 ggplot(store, aes(x = mu, y = n, group = r)) +
   geom_line(aes(colour = factor(r)), linewidth = 1.2) +
   geom_point(colour = "gray50", size = 1.5) +
+  labs(title = "Number of Main Events",
+       subtitle = "By extreme event threshold and where r% of the locations where affected",
+    x = "Extreme event threshold (quantile probability)",
+    y = "Number of main events",
+    colour = "r% of stations affected") +
   theme_bw() +
   theme(legend.position = "bottom")
 
@@ -123,7 +132,13 @@ ggplot(store, aes(x = mu, y = n, group = r)) +
 
 geo = read_spatial_norway("//ad.nr.no/shares/samba_shared/Sommerstudenter/Henrik/Nyttig/Norgeomriss/")
 
-stations_plot = plot_stations(discharge.east, geo)
+stations_plot = plot_stations(discharge.data, geo, station_ids = T)
+
+# ---- Fourieranalyse ----
+# discharge::fourierAnalysis
+
+discharge.sub = discharge.data[stat_id == 200011]
+
 
 # ---- susceptibility index ----
 
@@ -148,3 +163,35 @@ for (i in 1:length(r)) {
 }
 
 s.ind = x/(n+1)
+
+
+discharge.sub = discharge.data[stat_id == 200011]
+discharge.sub.qt = discharge.sub$qt
+
+# ---- ACF ----
+
+stations = c(200303, 1600051, 300022, 12000137)
+
+acf1 = acf(discharge.data[stat_id == 200303, qt])
+acf2 = acf(discharge.data[stat_id == 1600051, qt])
+acf3 = acf(discharge.data[stat_id == 300022, qt])
+acf4 = acf(discharge.data[stat_id == 1200137, qt])
+
+par(mfrow = c(2, 2))
+plot(acf1)
+plot(acf2)
+plot(acf3)
+plot(acf4)
+
+all.stations = unique(discharge.data$stat_id)
+acf.lag7 = c()
+
+for (i in 1:length(all.stations)) {
+  this.station = all.stations[i]
+  discharge.sub = discharge.data[stat_id == this.station]
+  
+  acf = acf(discharge.sub[,qt])
+  
+  acf.lag7 = c(acf.lag7, acf$acf[7])
+}
+
