@@ -32,7 +32,8 @@ read_spatial_norway = function(path) {
 }
 
 plot_stations = function(nvedat,
-                         norway.lonlat) {
+                         norway.lonlat,
+                         station_ids = FALSE) {
   utm.x = nvedat$mean_utmx
   utm.y = nvedat$mean_utmy
   
@@ -41,25 +42,44 @@ plot_stations = function(nvedat,
   nvedat.converted = cbind(nvedat, coords.lonlat)
   nvedat.converted.sub = nvedat.converted[, head(.SD, 1), by = stat_id]
   
-  p = ggplot() +
-    geom_polygon(aes(x = long, y = lat, group = id), data = norway.lonlat,
-                 fill = "grey90", colour = "grey40") +
-    geom_point(aes(x = X, y = Y, size = area_total, 
-                   colour = reguleringsgrad_magasin),
-               data = nvedat.converted.sub) +
-    labs(title = "Overview of Catchments Included in Data Set",
-         subtitle = "Discharge Data",
-         x = element_blank(),
-         y = element_blank(),
-         colour = "Degree of Regulation",
-         size = "Total Area") +
-    viridis::scale_color_viridis(option = "turbo") +
-    theme_bw() +
-    theme(axis.text = element_blank(),
-          axis.ticks = element_blank(),
-          panel.grid = element_blank(),
-          legend.position = "right")
-  
+  if (station_ids == TRUE) {
+    p = ggplot() +
+      geom_polygon(aes(x = long, y = lat, group = id), data = norway.lonlat,
+                   fill = "grey90", colour = "grey40") +
+      geom_text(aes(x = X, y = Y, label = stat_id, colour = reguleringsgrad_magasin), 
+                data = nvedat.converted.sub) +
+      labs(title = "Overview of Catchments Included in Data Set",
+           subtitle = "Discharge Data",
+           x = element_blank(),
+           y = element_blank(),
+           colour = "Degree of Regulation",
+           size = "Total Area") +
+      viridis::scale_color_viridis(option = "turbo") +
+      theme_bw() +
+      theme(axis.text = element_blank(),
+            axis.ticks = element_blank(),
+            panel.grid = element_blank(),
+            legend.position = "right")
+  } else {
+    p = ggplot() +
+      geom_polygon(aes(x = long, y = lat, group = id), data = norway.lonlat,
+                   fill = "grey90", colour = "grey40") +
+      geom_point(aes(x = X, y = Y, size = area_total, 
+                     colour = reguleringsgrad_magasin),
+                 data = nvedat.converted.sub) +
+      labs(title = "Overview of Catchments Included in Data Set",
+           subtitle = "Discharge Data",
+           x = element_blank(),
+           y = element_blank(),
+           colour = "Degree of Regulation",
+           size = "Total Area") +
+      viridis::scale_color_viridis(option = "turbo") +
+      theme_bw() +
+      theme(axis.text = element_blank(),
+            axis.ticks = element_blank(),
+            panel.grid = element_blank(),
+            legend.position = "right")
+  }
   return(p)
 }
 
