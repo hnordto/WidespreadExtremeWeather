@@ -24,7 +24,7 @@ discharge.data = subset_discharge(discharge.east,
 
 # ---- Identify extreme events ----
 # Compute extreme thresholds
-thresholds = extreme_threshold(discharge.data, probs = .9)
+thresholds = extreme_threshold(discharge.data, probs = .7)
 
 # Identify extreme events
 extreme.events = extreme_events(discharge.data, thresholds)
@@ -195,3 +195,45 @@ for (i in 1:length(all.stations)) {
   acf.lag7 = c(acf.lag7, acf$acf[7])
 }
 
+# ---- Clustering ----
+
+# PCA: Does this really make sense when applied to the binary matrix? 
+
+mat |> as.data.frame() |> rownames_to_column("stat_id") -> mat.df
+stat_metadata = discharge.data[, head(.SD, 1), by = stat_id]
+
+pca.obj = prcomp(mat)
+score.tbl = as.data.frame(pca.obj$x) |> rownames_to_column("stat_id")
+score.tbl = merge(score.tbl, stat_metadata, by = "stat_id")
+
+ggplot(score.tbl) +
+  geom_point(aes(x = PC1, y = PC2, colour = stat_id))
+
+# k-means
+
+library(cluster)
+
+pam.func = function(dta, k) {
+  dst = dist(dta, method = "euclidean")
+  pam.obj = pam(dst, k, nstart = 10)
+  return(list(cluster = pam.obj$cluster))
+}             
+
+gs.obj = clusGap(mat, pam.func, K.max = 10, B = 50)
+
+maxSE(gs.obj$Tab[,3],gs.obj$Tab[,4], method = "firstSEmax")
+
+km.obj = kmeans(mat, centers = 3, nstart = 10)
+
+clusters = data.table(stat_id = as.integer(names(km.obj$cluster)),
+                      clus = as.integer(km.obj$cluster))
+
+clusters = merge(clusters, stat_metadata, by = "stat_id")
+coords.lonlat = LongLatToUTM(clusters$mean_utmx, clusters$mean_utmy, 33)
+cluster.coords = cbind(clusters, coords.lonlat)
+
+ggplot() +
+  geom_polygon(aes(x = long, y = lat, group = id), data = geo,
+               fill = "grey90", colour = "grey40") +
+  geom_point(aes(x = X, y = Y, colour = factor(clus)), data = cluster.coords) +
+  theme_bw()

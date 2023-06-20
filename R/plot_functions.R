@@ -161,3 +161,15 @@ plot_event_matrix = function(mat) {
   return(p)
   
 }
+
+utm.x = nvedat$mean_utmx
+utm.y = nvedat$mean_utmy
+
+coords.lonlat = LongLatToUTM(utm.x, utm.y, 33)
+
+nvedat.converted = cbind(nvedat, coords.lonlat)
+nvedat.converted.sub = nvedat.converted[, head(.SD, 1), by = stat_id]
+
+plot_clusters = function(mat) {
+    
+}
