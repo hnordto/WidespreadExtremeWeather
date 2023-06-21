@@ -187,11 +187,12 @@ plot_clusters = function(km.obj,
          y = element_blank(),
          x = element_blank(),
          colour = "Group") +
+    #scale_color_brewer(palette = "Dark2") +
     theme_bw() +
     theme(axis.text = element_blank(),
           axis.ticks = element_blank(),
           panel.grid = element_blank(),
-          legend.position = "right")
+          legend.position = "none")
   
   return(p)
 }

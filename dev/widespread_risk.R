@@ -211,29 +211,46 @@ ggplot(score.tbl) +
 
 # k-means
 
-library(cluster)
+# NB! If function returns > 10, increase K.max argument an re-run
+n.cluster = cluster_optimum(discharge.data)
 
-pam.func = function(dta, k) {
-  dst = dist(dta, method = "euclidean")
-  pam.obj = pam(dst, k, nstart = 10)
-  return(list(cluster = pam.obj$cluster))
-}             
+km.obj = kmeans(mat, centers = n.cluster, nstart = 10)
 
-gs.obj = clusGap(mat, pam.func, K.max = 10, B = 50)
+quantiles = c(0.9, 0.95, 0.975, 0.99)
 
-maxSE(gs.obj$Tab[,3],gs.obj$Tab[,4], method = "firstSEmax")
+for (i in 1:length(quantiles)) {
+  this.quantile = quantiles[i]
+  
+  thresholds = extreme_threshold(discharge.data, probs = this.quantile)
+  
+  extreme.events = extreme_events(discharge.data, thresholds)
+  
+  main.events = main_events(extreme.events)
+  
+  mat = event_matrix(main.events, extreme.events)
+  
+  mat.name = paste0("mat",this.quantile)
+  
+  assign(mat.name, mat)
+}
 
-km.obj = kmeans(mat, centers = 3, nstart = 10)
+n.clusters.090 = cluster_optimum(mat0.9)
+n.clusters.095 = cluster_optimum(mat0.95)
+n.clusters.0975 = cluster_optimum(mat0.975)
+n.clusters.099 = cluster_optimum(mat0.99)
 
-clusters = data.table(stat_id = as.integer(names(km.obj$cluster)),
-                      clus = as.integer(km.obj$cluster))
+km.obj.09 = kmeans(mat, n.clusters.090)
+km.obj.095 = kmeans(mat, n.clusters.095)
+km.obj.0975 = kmeans(mat, n.clusters.0975)
+km.obj.099 = kmeans(mat, n.clusters.099)
 
-clusters = merge(clusters, stat_metadata, by = "stat_id")
-coords.lonlat = LongLatToUTM(clusters$mean_utmx, clusters$mean_utmy, 33)
-cluster.coords = cbind(clusters, coords.lonlat)
+clusterplot.09 = plot_clusters(km.obj.09, discharge.data, geo)
+clusterplot.095 = plot_clusters(km.obj.095, discharge.data, geo)
+clusterplot.0975 = plot_clusters(km.obj.0975, discharge.data, geo)
+clusterplot.099 = plot_clusters(km.obj.099, discharge.data, geo)
 
-ggplot() +
-  geom_polygon(aes(x = long, y = lat, group = id), data = geo,
-               fill = "grey90", colour = "grey40") +
-  geom_point(aes(x = X, y = Y, colour = factor(clus)), data = cluster.coords) +
-  theme_bw()
+clusters = ggarrange(clusterplot.09,
+                     clusterplot.095,
+                     clusterplot.0975,
+                     clusterplot.099)
+clusters
