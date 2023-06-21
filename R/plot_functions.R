@@ -37,7 +37,7 @@ plot_stations = function(nvedat,
   utm.x = nvedat$mean_utmx
   utm.y = nvedat$mean_utmy
   
-  coords.lonlat = LongLatToUTM(utm.x, utm.y, 33)
+  coords.lonlat = UTMToLongLat(utm.x, utm.y, 33)
   
   nvedat.converted = cbind(nvedat, coords.lonlat)
   nvedat.converted.sub = nvedat.converted[, head(.SD, 1), by = stat_id]
@@ -162,14 +162,36 @@ plot_event_matrix = function(mat) {
   
 }
 
-utm.x = nvedat$mean_utmx
-utm.y = nvedat$mean_utmy
 
-coords.lonlat = LongLatToUTM(utm.x, utm.y, 33)
-
-nvedat.converted = cbind(nvedat, coords.lonlat)
-nvedat.converted.sub = nvedat.converted[, head(.SD, 1), by = stat_id]
-
-plot_clusters = function(mat) {
-    
+plot_clusters = function(km.obj,
+                         data,
+                         norway.lonlat) {
+  
+  stat.metadata = data[, head(.SD, 1), by = stat_id]
+  
+  clusters.df = data.table(stat_id = as.integer(names(km.obj$cluster)),
+                           clus = as.integer(km.obj$cluster))
+  
+  clusters.stat = merge(clusters.df, stat.metadata, by = "stat_id")
+  
+  coords.lonlat = UTMToLongLat(clusters.stat$mean_utmx,
+                               clusters.stat$mean_utmy, 33)
+  
+  clusters.stat = cbind(clusters.stat, coords.lonlat)
+  
+  p = ggplot() +
+    geom_polygon(aes(x = long, y = lat, group = id), data = norway.lonlat,
+                 fill = "grey90", colour = "grey40") +
+    geom_point(aes(x = X, y = Y, colour = factor(clus)), data = clusters.stat, size = 2) +
+    labs(title = "Geographical distribution of cluster members",
+         y = element_blank(),
+         x = element_blank(),
+         colour = "Group") +
+    theme_bw() +
+    theme(axis.text = element_blank(),
+          axis.ticks = element_blank(),
+          panel.grid = element_blank(),
+          legend.position = "right")
+  
+  return(p)
 }
