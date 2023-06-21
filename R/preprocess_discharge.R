@@ -136,7 +136,7 @@ subset_discharge <- function(nvedat,
   
   # Calculate the yearly number of measurements on each station
   station.freq = nvedat.long[,.(Freq = sum(val)), by=.(year, stat)]
-  station.freq = station.freq[year > min_year]
+  station.freq = station.freq[year >= min_year]
   
   # Create list to store which stations to keep
   stations.to.keep = c()
@@ -167,7 +167,7 @@ subset_discharge <- function(nvedat,
   station.indexer = gsub("stat_", "", stations.to.keep)
   
   # Subset the desired year and stations to keep
-  data = nvedat[year > min_year]
+  data = nvedat[year >= min_year]
   data = data[stat_id %in% station.indexer]
   
   # Merge with all possible dates in interval
