@@ -138,6 +138,31 @@ event_matrix = function(main.events,
   
 }
 
+# ---- SUSCEPTIBILITY INDEX ----
+
+sus_index = function(mat, r.list) {
+  n = ncol(mat)
+  
+  s.ind = c()
+  
+  for (i in 1:length(r.list)) {
+    r = r.list[i]
+    
+    event.freq = as.vector(colMeans(mat))
+    
+    x = sum(event.freq >= r)
+    
+    s = x/(n+1)
+    
+    s.ind = c(s.ind, s)
+  }
+  
+  return (s.ind)
+}
+
+
+
+
 # ---- CLUSTERING ----
 
 require(cluster)
@@ -157,6 +182,5 @@ cluster_optimum = function(data, K.max = 10, B = 50) {
   
   return(num_clusters)
 }
-
 
 
