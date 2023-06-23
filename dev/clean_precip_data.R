@@ -84,4 +84,10 @@ library(scales)
 
 ggplot(data.long, aes(x = date, y = stat)) +
   geom_raster(aes(fill = factor(val))) +
-  scale_fill_manual(values = c("lightgray", "blue"), labels = c("NO", "YES"))
+  labs(title = "Precipitation measured /YES/NO",
+       x = "Date",
+       y = "Station",
+       fill = "Value") +
+  scale_fill_manual(values = c("lightgray", "blue"), labels = c("NO", "YES")) +
+  theme_bw() +
+  theme(legend.position = "bottom")

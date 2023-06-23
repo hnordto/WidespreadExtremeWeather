@@ -41,6 +41,7 @@ discharge.east.long = make_rec_discharge(discharge.east, reshape = T)
 
 discharge.data = subset_discharge(discharge.east,
                                   discharge.east.long,
+                                  min_year = 1986,
                                   day_threshold = 364)
 quantiles = c(0.9, 0.95, 0.975, 0.99)
 
@@ -82,6 +83,7 @@ create_diagrams = function(km.obj,mat) {
     cluster = cluster.df[clus == cluster.num]
     
     mat.subset = mat[rownames(mat) %in% cluster$stat_id,]
+    mat.subset = mat.subset[,colSums(mat.subset)>0]
     
     events = as.data.table(colnames(mat.subset))
     setnames(events, "V1", "date")
@@ -99,43 +101,46 @@ create_diagrams = function(km.obj,mat) {
   return(l)
 }
 
-# For threshold = 0.9
+l.09 = create_diagrams(km.obj.09,mat0.9)
 
-cluster.df = data.table(stat_id = as.integer(names(km.obj.09$cluster)),
-                        clus = as.integer(km.obj.09$cluster))
-cluster1 = cluster.df[clus == 1]
+all.09 = as.data.table(colnames(mat0.9))
+setnames(all.09, "V1", "date")
+all.09$month = month(all.09$date)
 
-mat1 = mat[rownames(mat) %in% cluster1$stat_id,]
+all.09 = all.09 |> group_by(month) |> summarise(n.events = n())
 
-events = colnames(mat1)
-events = as.data.table(events)
-
-test = as.data.table(test)
-setnames(events, "events", "date")
-
-events$month = month(events$date)
-events$year = year(events$date)
-
-events |> 
-  group_by(month) |> 
-  summarise(n.events = n()) -> events.df
-
-events.df$month = month.abb[events.df$month]
-events.df$month = factor(events.df$month,
-                     levels = c("Jan","Feb","Mar","Apr","May","Jun",
-                                "Jul","Aug","Sep","Oct","Nov","Dec"))
+all.09$month = month.abb[all.09$month]
+all.09$month = factor(all.09$month,
+                         levels = c("Jan","Feb","Mar","Apr","May","Jun",
+                                    "Jul","Aug","Sep","Oct","Nov","Dec"))
 
 
-n <- 37
-qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
-col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
+plot_diagram = function(data, title = "") {
+  p = ggplot(data, aes(x = month, y = n.events)) +
+    geom_bar(stat = "identity", fill = "steelblue", colour = "black") +
+    scale_x_discrete(breaks = c("Jan","Feb","Mar","Apr","May","Jun",
+                                "Jul","Aug","Sep","Oct","Nov","Dec")) +
+    coord_polar(start = pi/12) +
+    scale_y_discrete(breaks = seq(0,10,1)) +
+    labs(title = title) +
+    theme_bw() +
+    theme(axis.title = element_blank(),
+          panel.ontop = TRUE, # change to FALSE for grid lines below the wind rose
+          panel.background = element_blank())
+  
+  return(p)
+}
 
+rose.09.all = plot_diagram(all.09, title = "Seasonal event distribution")
+rose.09.1 = plot_diagram(l.09[[1]], title = "Seasonal event distribution cluster 1")
+rose.09.2 = plot_diagram(l.09[[2]], title = "Seasonal event distribution cluster 2")
+rose.09.3 = plot_diagram(l.09[[3]], title = "Seasonal event distribution cluster 3")
+rose.09.4 = plot_diagram(l.09[[4]], title = "Seasonal event distribution cluster 4")
 
+ggarrange(rose.09.all, ggarrange(rose.09.1,
+                                 rose.09.2,
+                                 rose.09.3,
+                                 rose.09.4,
+                                 ncol = 2,
+                                 nrow = 2)) -> cluster_seasonal_09
 
-ggplot(events.df, aes(x = month, y = n.events)) +
-  geom_bar(stat = "identity", fill = "steelblue", colour = "black") +
-  coord_polar(start = pi/12) +
-  theme_bw() +
-  theme(axis.title = element_blank(),
-        panel.ontop = TRUE, # change to FALSE for grid lines below the wind rose
-        panel.background = element_blank())

@@ -192,7 +192,7 @@ plot_clusters = function(km.obj,
     theme(axis.text = element_blank(),
           axis.ticks = element_blank(),
           panel.grid = element_blank(),
-          legend.position = "none")
+          legend.position = "bottom")
   
   return(p)
 }

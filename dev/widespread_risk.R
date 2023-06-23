@@ -9,6 +9,7 @@ source("dev/discharge_intervals.R")
 source("R/preprocess_discharge.R")
 source("R/main_functions.R")
 source("R/plot_functions.R")
+source("R/data_interfaces.R")
 
 # ---- Load and preprocess data ----
 
@@ -77,7 +78,7 @@ ggplot(n.main.events.df, aes(x = threshold, y = n)) +
 # ---- Test different extreme thresholds ----
 # Test different thresholds
 
-extreme.thresholds.range = c(0.5, 0.6, 0.7, 0.8, 0.9, 0.925, 0.95, 0.975, 0.99)
+extreme.thresholds.range = c(0.9, 0.95, 0.975, 0.99)
 
 store = data.table(mu = numeric(),
                    r = numeric(),
