@@ -61,16 +61,6 @@ for (i in 1:length(quantiles)) {
   assign(mat.name, mat)
 }
 
-n.clusters.090 = cluster_optimum(mat0.9)
-n.clusters.095 = cluster_optimum(mat0.95)
-n.clusters.0975 = cluster_optimum(mat0.975)
-n.clusters.099 = cluster_optimum(mat0.99)
-
-km.obj.09 = kmeans(mat, n.clusters.090)
-km.obj.095 = kmeans(mat, n.clusters.095)
-km.obj.0975 = kmeans(mat, n.clusters.0975)
-km.obj.099 = kmeans(mat, n.clusters.099)
-
 create_diagrams = function(km.obj,mat) {
   cluster.df = data.table(stat_id = as.integer(names(km.obj$cluster)),
                           clus = as.integer(km.obj$cluster))
@@ -101,27 +91,12 @@ create_diagrams = function(km.obj,mat) {
   return(l)
 }
 
-l.09 = create_diagrams(km.obj.09,mat0.9)
-
-all.09 = as.data.table(colnames(mat0.9))
-setnames(all.09, "V1", "date")
-all.09$month = month(all.09$date)
-
-all.09 = all.09 |> group_by(month) |> summarise(n.events = n())
-
-all.09$month = month.abb[all.09$month]
-all.09$month = factor(all.09$month,
-                         levels = c("Jan","Feb","Mar","Apr","May","Jun",
-                                    "Jul","Aug","Sep","Oct","Nov","Dec"))
-
-
 plot_diagram = function(data, title = "") {
   p = ggplot(data, aes(x = month, y = n.events)) +
     geom_bar(stat = "identity", fill = "steelblue", colour = "black") +
     scale_x_discrete(breaks = c("Jan","Feb","Mar","Apr","May","Jun",
                                 "Jul","Aug","Sep","Oct","Nov","Dec")) +
     coord_polar(start = pi/12) +
-    scale_y_discrete(breaks = seq(0,10,1)) +
     labs(title = title) +
     theme_bw() +
     theme(axis.title = element_blank(),
@@ -131,16 +106,94 @@ plot_diagram = function(data, title = "") {
   return(p)
 }
 
-rose.09.all = plot_diagram(all.09, title = "Seasonal event distribution")
-rose.09.1 = plot_diagram(l.09[[1]], title = "Seasonal event distribution cluster 1")
-rose.09.2 = plot_diagram(l.09[[2]], title = "Seasonal event distribution cluster 2")
-rose.09.3 = plot_diagram(l.09[[3]], title = "Seasonal event distribution cluster 3")
-rose.09.4 = plot_diagram(l.09[[4]], title = "Seasonal event distribution cluster 4")
+cluster_events_monthly = function(km.obj, mat, extreme_threshold = "") {
+  
+  all = as.data.table(colnames(mat))
+  setnames(all, "V1", "date")
+  all$month = month(all$date)
+  
+  all = all |> group_by(month) |> summarise(n.events = n())
+  
+  all$month = month.abb[all$month]
+  all$month = factor(all$month,
+                     levels = c("Jan","Feb","Mar","Apr","May","Jun",
+                                "Jul","Aug","Sep","Oct","Nov","Dec"))
+  plot_all = plot_diagram(all, title = paste0("Seasonal event distribution at percentile ",extreme_threshold))
+  
+  plots = list()
+  plots = append(plots, list(plot_all))
+  
+  l = create_diagrams(km.obj, mat)
+  
+  
+  
+  for (i in 1:length(l)) {
+    this.cluster = l[[i]]
+    
+    plot = plot_diagram(this.cluster, title = paste0("Cluster ",i))
+    
+    plots = append(plots, list(plot))
+    
+  }
+  
+  return(plots)
+  
+}
 
-ggarrange(rose.09.all, ggarrange(rose.09.1,
-                                 rose.09.2,
-                                 rose.09.3,
-                                 rose.09.4,
-                                 ncol = 2,
-                                 nrow = 2)) -> cluster_seasonal_09
+# 0.9
+n.clusters.090 = cluster_optimum(mat0.9)
+n.clusters.095 = cluster_optimum(mat0.95)
+n.clusters.0975 = cluster_optimum(mat0.975)
+n.clusters.099 = cluster_optimum(mat0.99)
 
+km.obj.09 = kmeans(mat0.9, n.clusters.090)
+km.obj.095 = kmeans(mat0.95, n.clusters.095)
+km.obj.0975 = kmeans(mat0.975, n.clusters.0975)
+km.obj.099 = kmeans(mat0.99, n.clusters.099)
+
+# 0.9
+
+events.monthly.09 = cluster_events_monthly(km.obj.09, mat0.9, "0.9")
+
+ggarrange(events.monthly.09[[1]],
+          ggarrange(events.monthly.09[[2]],
+                    events.monthly.09[[3]],
+                    events.monthly.09[[4]],
+                    events.monthly.09[[5]],
+                    ncol = 2, nrow = 2))
+
+# 0.95
+
+events.monthly.095 = cluster_events_monthly(km.obj.095, mat0.95, "0.95")
+
+ggarrange(events.monthly.095[[1]],
+          ggarrange(events.monthly.095[[2]],
+                    events.monthly.095[[3]],
+                    events.monthly.095[[4]],
+                    events.monthly.095[[5]],
+                    events.monthly.095[[6]],
+                    events.monthly.095[[7]],
+                    ncol = 3, nrow = 2))
+
+# 0.975
+
+events.monthly.0975 = cluster_events_monthly(km.obj.0975, mat0.975, "0.975")
+
+ggarrange(events.monthly.0975[[1]],
+          ggarrange(events.monthly.0975[[2]],
+                    events.monthly.0975[[3]],
+                    events.monthly.0975[[4]],
+                    events.monthly.0975[[5]],
+                    events.monthly.0975[[6]],
+                    events.monthly.0975[[7]],
+                    ncol = 3, nrow = 2))
+
+# 0.99
+
+events.monthly.099 = cluster_events_monthly(km.obj.099, mat0.99, "0.99")
+
+ggarrange(events.monthly.099[[1]],
+          ggarrange(events.monthly.099[[2]],
+                    events.monthly.099[[3]],
+                    events.monthly.099[[4]],
+                    ncol = 2, nrow = 2))
