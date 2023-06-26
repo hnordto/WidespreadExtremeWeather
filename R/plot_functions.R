@@ -196,3 +196,19 @@ plot_clusters = function(km.obj,
   
   return(p)
 }
+
+# Helper function for plotting the monthly number of main events per cluster
+plot_events_monthly = function(data, title = "") {
+  p = ggplot(data, aes(x = month, y = n.events)) +
+    geom_bar(stat = "identity", fill = "steelblue", colour = "black") +
+    scale_x_discrete(breaks = c("Jan","Feb","Mar","Apr","May","Jun",
+                                "Jul","Aug","Sep","Oct","Nov","Dec")) +
+    coord_polar(start = pi/12) +
+    labs(title = title) +
+    theme_bw() +
+    theme(axis.title = element_blank(),
+          panel.ontop = TRUE, # change to FALSE for grid lines below the wind rose
+          panel.background = element_blank())
+  
+  return(p)
+}

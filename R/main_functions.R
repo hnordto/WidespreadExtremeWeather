@@ -183,4 +183,68 @@ cluster_optimum = function(data, K.max = 10, B = 50) {
   return(num_clusters)
 }
 
+# Helper function for separating event matrix according to a clustering result
+subset_mat_on_cluster = function(km.obj,mat) {
+  cluster.df = data.table(stat_id = as.integer(names(km.obj$cluster)),
+                          clus = as.integer(km.obj$cluster))
+  uniqueclusters = unique(cluster.df$clus)
+  
+  l = list()
+  for (i in 1:length(uniqueclusters)) {
+    cluster.num = uniqueclusters[i]
+    
+    cluster = cluster.df[clus == cluster.num]
+    
+    mat.subset = mat[rownames(mat) %in% cluster$stat_id,]
+    mat.subset = mat.subset[,colSums(mat.subset)>0]
+    
+    events = as.data.table(colnames(mat.subset))
+    setnames(events, "V1", "date")
+    events$month = month(events$date)
+    
+    events |> group_by(month) |> summarise(n.events = n()) -> events.df
+    
+    events.df$month = month.abb[events.df$month]
+    events.df$month = factor(events.df$month,
+                             levels = c("Jan","Feb","Mar","Apr","May","Jun",
+                                        "Jul","Aug","Sep","Oct","Nov","Dec"))
+    
+    l = append(l, list(events.df))
+  }
+  return(l)
+}
 
+# Function for plotting the monthly distribution of events per cluster
+cluster_events_monthly = function(km.obj, mat, extreme_threshold = "") {
+  
+  all = as.data.table(colnames(mat))
+  setnames(all, "V1", "date")
+  all$month = month(all$date)
+  
+  all = all |> group_by(month) |> summarise(n.events = n())
+  
+  all$month = month.abb[all$month]
+  all$month = factor(all$month,
+                     levels = c("Jan","Feb","Mar","Apr","May","Jun",
+                                "Jul","Aug","Sep","Oct","Nov","Dec"))
+  plot_all = plot_events_monthly(all, title = paste0("Seasonal event distribution at percentile ",extreme_threshold))
+  
+  plots = list()
+  plots = append(plots, list(plot_all))
+  
+  l = subset_mat_on_cluster(km.obj, mat)
+  
+  
+  
+  for (i in 1:length(l)) {
+    this.cluster = l[[i]]
+    
+    plot = plot_events_monthly(this.cluster, title = paste0("Cluster ",i))
+    
+    plots = append(plots, list(plot))
+    
+  }
+  
+  return(plots)
+  
+}
