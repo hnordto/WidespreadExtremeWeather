@@ -1,3 +1,4 @@
+proj_wd = getwd()
 wd="//ad.nr.no/shares/samba_shared/Sommerstudenter/Henrik/Data/Precipitation"
 setwd(wd)
 
@@ -13,6 +14,9 @@ prec = read_delim("//ad.nr.no/shares/samba_shared/Sommerstudenter/Henrik/Data/Pr
                   delim = ";", escape_double = FALSE, col_names = FALSE, 
                   locale = locale(decimal_mark = ",", grouping_mark = ""), 
                   trim_ws = TRUE, skip = 3)
+
+setwd(proj_wd)
+
 prec = prec[rowSums(is.na(prec)) != ncol(prec),]
 
 prec = data.table("date" = as_datetime(prec$X2),
@@ -79,10 +83,121 @@ savestation = cbind(savestation_dates, savestation)
 
 data.long = pivot_longer(savestation, !date, names_to = "stat", values_to = "val")
 data.long$year = year(data.long$date)
+data.long$month = month(data.long$date)
+data.long$day = day(data.long$date)
 
 library(scales)
 
 ggplot(data.long, aes(x = date, y = stat)) +
+  geom_raster(aes(fill = factor(val))) +
+  labs(title = "Precipitation measured /YES/NO",
+       x = "Date",
+       y = "Station",
+       fill = "Value") +
+  scale_fill_manual(values = c("lightgray", "blue"), labels = c("NO", "YES")) +
+  theme_bw() +
+  theme(legend.position = "bottom")
+
+
+
+data.long = as.data.table(data.long)
+
+# Subsetting
+
+uniquestations = as.vector(unique(data.long[,c("stat")]))
+
+station.freq = data.long[,.(Freq = sum(val)), by=.(year, stat)]
+
+stations.to.keep = c()
+
+for (i in 1:length(uniquestations$stat)) {
+  keep = TRUE
+  
+  this.station = station.freq[stat == uniquestations$stat[i]]
+  
+  for (j in 1:nrow(this.station)) {
+    this.year = this.station[j,]
+    
+    if (this.year$Freq == 0) {
+      keep = FALSE
+    }
+  }
+  
+  print(keep)
+  
+  if (keep == TRUE)
+    stations.to.keep = c(stations.to.keep, uniquestations$stat[i])
+}
+
+data.long.2 = data.long[stat %in% stations.to.keep]
+
+ggplot(data.long.2, aes(x = date, y = stat)) +
+  geom_raster(aes(fill = factor(val))) +
+  labs(title = "Precipitation measured /YES/NO",
+       x = "Date",
+       y = "Station",
+       fill = "Value") +
+  scale_fill_manual(values = c("lightgray", "blue"), labels = c("NO", "YES")) +
+  theme_bw() +
+  theme(legend.position = "bottom")
+
+uniquestations = as.vector(unique(data.long.2[,c("stat")]))
+uniquemeasurements = as.vector(unique(data.long.2[,c("date")]))
+
+for (i in 1:length(uniquemeasurements$date)) {
+  this.timepoint = uniquemeasurements$date[i]
+  
+  timepoint.data = data.long.2[date == this.timepoint]
+  
+  flagged.stat = timepoint.data[val == 0]
+  
+  
+}
+
+flag.stat.full = c()
+flag.date.full = c()
+for (i in 1:length(uniquestations$stat)) {
+  flag.stat = c()
+  flag.date = c()
+  
+  this.station = uniquestations$stat[i]
+  
+  data.sub = data.long.2[stat == this.station]
+  
+  x = data.sub$val
+  
+  res = rle(x == 0)
+  gap_sizes = rep(res$values*res$lengths,res$lengths)
+  
+  data.sub$gap_size = gap_sizes
+  
+  uniquemeasurements = as.vector(unique(data.sub[,c("date")]))
+  
+  if (any(data.sub$gap_size > 744)) {
+    flag.stat = c(flag.stat, this.station)
+  } else if (any(data.sub$gap_size > 48)) {
+    
+    dates.to.flag = as.character(data.sub[gap_size > 48]$date)
+    
+    flag.date = c(flag.date, dates.to.flag)
+  }
+  
+  flag.stat.full = c(flag.stat.full, flag.stat)
+  flag.date.full = c(flag.date.full, flag.date)
+  
+}
+
+new.dat = data.long.2[!(stat) %in% flag.stat.full]
+new.dat = new.dat[!(date %in% flag.date.full)]
+
+station.indexer = gsub("stat_", "", flag.stat.full)
+
+prec2 = merge(allhours, prec, by = c("date"), all.x = T)
+prec2 = prec2[!(stat_id %in% station.indexer)]
+prec2 = prec2[!(date %in% flag.date.full)]
+prec2[is.na(prec2)] = 0
+
+ggplot(new.dat, aes(x = date, y = stat)) +
   geom_raster(aes(fill = factor(val))) +
   labs(title = "Precipitation measured /YES/NO",
        x = "Date",
