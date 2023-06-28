@@ -97,7 +97,7 @@ library(scales)
 
 ggplot(data.long, aes(x = date, y = stat)) +
   geom_raster(aes(fill = factor(val))) +
-  labs(title = "Precipitation measured /YES/NO",
+  labs(title = "Precipitation measured (YES/NO)",
        x = "Date",
        y = "Station",
        fill = "Value") +
@@ -161,6 +161,8 @@ for (i in 1:length(uniquemeasurements$date)) {
   
 }
 
+data.long.2 = data.long
+
 flag.stat.full = c()
 flag.date.full = c()
 for (i in 1:length(uniquestations$stat)) {
@@ -200,19 +202,22 @@ new.dat = new.dat[!(date %in% flag.date.full)]
 station.indexer = gsub("stat_", "", flag.stat.full)
 
 prec2 = merge(allhours, prec, by = c("date"), all.x = T)
-prec2 = prec2[!(stat_id %in% station.indexer)]
+prec2 = prec[!(stat_id %in% station.indexer)]
 prec2 = prec2[!(date %in% flag.date.full)]
 prec2[is.na(prec2)] = 0
 
 ggplot(new.dat, aes(x = date, y = stat)) +
   geom_raster(aes(fill = factor(val))) +
-  labs(title = "Precipitation measured /YES/NO",
+  labs(title = "Precipitation measured (YES/NO)",
        x = "Date",
        y = "Station",
        fill = "Value") +
   scale_fill_manual(values = c("lightgray", "blue"), labels = c("NO", "YES")) +
   theme_bw() +
   theme(legend.position = "bottom")
+
+ggplot(prec2, aes(x = date, y = stat)) +
+  geom-raster(aes(fill = factor(val)))
 
 
 # Widespread risk
