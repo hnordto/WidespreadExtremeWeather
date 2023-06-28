@@ -9,6 +9,13 @@ library(tidyverse)
 prec_meta <- read_delim("//ad.nr.no/shares/samba_shared/Sommerstudenter/Henrik/Data/Precipitation/Hourly/meta_NR_sommerjobb_jun_23.csv", 
                         delim = ";", escape_double = FALSE, col_names = FALSE, 
                         trim_ws = TRUE)
+stat_coord = prec_meta[,c("X1","X5","X6")]
+setnames(stat_coord, "X1", "stat_id")
+setnames(stat_coord, "X5", "mean_utmx")
+setnames(stat_coord, "X6", "mean_utmy")
+stat_coord = head(stat_coord, -1)
+
+
 
 prec = read_delim("//ad.nr.no/shares/samba_shared/Sommerstudenter/Henrik/Data/Precipitation/Hourly/rr_1_kdvh_sommerjobb_NR_01012010_31122022_v01.csv", 
                   delim = ";", escape_double = FALSE, col_names = FALSE, 
@@ -285,3 +292,30 @@ event_matrix_prec = function(main.events,
 }
 
 mat = event_matrix_prec(main.events, extreme.events)
+
+# Plot stations
+
+plot_stations_prec = function(data,
+                              norway.lonlat) {
+  utm.x = data$mean_utmx
+  utm.y = data$mean_utmy
+  
+  coords.lonlat = UTMToLongLat(utm.x, utm.y, 33)
+  
+  data.converted = cbind(data, coords.lonlat)
+  data.converted.sub = data.converted[,head(.SD, 1), by = stat_id]
+  
+  p = ggplot() + 
+    geom_polygon(aes(x = long, y = lat, group = id), data = norway.lonlat,
+                 fill = "grey90", colour = "grey40") +
+    geom_point(aes(x = X, y = Y), data = data.converted.sub) +
+    theme_bw() +
+    theme(axis.text = element_blank(),
+          axis.ticks = element_blank(),
+          panel.grid = element_blank(),
+          legend.position = "right")
+  
+  return(p)
+}
+
+
