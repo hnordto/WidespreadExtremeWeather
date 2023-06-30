@@ -130,6 +130,27 @@ plot_discharge = function(nvedat,
   return(p)
 }
 
+plot_precipitation = function(metdat,
+                              stations = c(3720, 4260, 27015, 18180)) {
+  d = metdat[stat_id %in% stations]
+  
+  p = ggplot(d, aes(x = date, y = qt, colour = factor(stat_id))) +
+    geom_point() +
+    facet_wrap(~factor(stat_id)) +
+    labs(title = paste0("Recorded discharge ",
+                        min(year(d$date)),
+                        "-",
+                        max(year(d$date))),
+         x = "Timepoint",
+         y = "Precipitation (mm)",
+         colour = "Station ID") +
+    theme_bw() +
+    theme(legend.position = "bottom")
+  
+  return(p)
+  
+}
+
 
 plot_event_matrix = function(mat) {
   
