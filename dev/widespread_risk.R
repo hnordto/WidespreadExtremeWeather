@@ -9,6 +9,7 @@ source("dev/discharge_intervals.R")
 source("R/preprocess_discharge.R")
 source("R/main_functions.R")
 source("R/plot_functions.R")
+source("R/data_interfaces.R")
 
 # ---- Load and preprocess data ----
 
@@ -77,7 +78,7 @@ ggplot(n.main.events.df, aes(x = threshold, y = n)) +
 # ---- Test different extreme thresholds ----
 # Test different thresholds
 
-extreme.thresholds.range = c(0.5, 0.6, 0.7, 0.8, 0.9, 0.925, 0.95, 0.975, 0.99)
+extreme.thresholds.range = c(0.9, 0.95, 0.975, 0.99)
 
 store = data.table(mu = numeric(),
                    r = numeric(),
@@ -197,24 +198,11 @@ for (i in 1:length(all.stations)) {
 
 # ---- Clustering ----
 
-# PCA: Does this really make sense when applied to the binary matrix? 
-
-mat |> as.data.frame() |> rownames_to_column("stat_id") -> mat.df
-stat_metadata = discharge.data[, head(.SD, 1), by = stat_id]
-
-pca.obj = prcomp(mat)
-score.tbl = as.data.frame(pca.obj$x) |> rownames_to_column("stat_id")
-score.tbl = merge(score.tbl, stat_metadata, by = "stat_id")
-
-ggplot(score.tbl) +
-  geom_point(aes(x = PC1, y = PC2, colour = stat_id))
+set.seed(123)
 
 # k-means
 
 # NB! If function returns > 10, increase K.max argument an re-run
-n.cluster = cluster_optimum(discharge.data)
-
-km.obj = kmeans(mat, centers = n.cluster, nstart = 10)
 
 quantiles = c(0.9, 0.95, 0.975, 0.99)
 
@@ -253,4 +241,50 @@ clusters = ggarrange(clusterplot.09,
                      clusterplot.095,
                      clusterplot.0975,
                      clusterplot.099)
-clusters
+
+# 0.9
+
+events.monthly.09 = cluster_events_monthly(km.obj.09, mat0.9, "0.9")
+
+ggarrange(events.monthly.09[[1]],
+          ggarrange(events.monthly.09[[2]],
+                    events.monthly.09[[3]],
+                    events.monthly.09[[4]],
+                    events.monthly.09[[5]],
+                    ncol = 2, nrow = 2)) -> cluster.seasonal.09
+
+# 0.95
+
+events.monthly.095 = cluster_events_monthly(km.obj.095, mat0.95, "0.95")
+
+ggarrange(events.monthly.095[[1]],
+          ggarrange(events.monthly.095[[2]],
+                    events.monthly.095[[3]],
+                    events.monthly.095[[4]],
+                    events.monthly.095[[5]],
+                    events.monthly.095[[6]],
+                    events.monthly.095[[7]],
+                    ncol = 3, nrow = 2)) -> cluster.seasonal.095
+
+# 0.975
+
+events.monthly.0975 = cluster_events_monthly(km.obj.0975, mat0.975, "0.975")
+
+ggarrange(events.monthly.0975[[1]],
+          ggarrange(events.monthly.0975[[2]],
+                    events.monthly.0975[[3]],
+                    events.monthly.0975[[4]],
+                    events.monthly.0975[[5]],
+                    events.monthly.0975[[6]],
+                    ncol = 3, nrow = 2)) -> cluster.seasonal.0975
+
+# 0.99
+
+events.monthly.099 = cluster_events_monthly(km.obj.099, mat0.99, "0.99")
+
+ggarrange(events.monthly.099[[1]],
+          ggarrange(events.monthly.099[[2]],
+                    events.monthly.099[[3]],
+                    events.monthly.099[[4]],
+                    ncol = 2, nrow = 2)) -> cluster.seasonal.099
+

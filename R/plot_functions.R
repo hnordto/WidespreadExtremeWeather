@@ -130,6 +130,27 @@ plot_discharge = function(nvedat,
   return(p)
 }
 
+plot_precipitation = function(metdat,
+                              stations = c(3720, 4260, 27015, 18180)) {
+  d = metdat[stat_id %in% stations]
+  
+  p = ggplot(d, aes(x = date, y = qt, colour = factor(stat_id))) +
+    geom_point() +
+    facet_wrap(~factor(stat_id)) +
+    labs(title = paste0("Recorded discharge ",
+                        min(year(d$date)),
+                        "-",
+                        max(year(d$date))),
+         x = "Timepoint",
+         y = "Precipitation (mm)",
+         colour = "Station ID") +
+    theme_bw() +
+    theme(legend.position = "bottom")
+  
+  return(p)
+  
+}
+
 
 plot_event_matrix = function(mat) {
   
@@ -192,7 +213,23 @@ plot_clusters = function(km.obj,
     theme(axis.text = element_blank(),
           axis.ticks = element_blank(),
           panel.grid = element_blank(),
-          legend.position = "none")
+          legend.position = "bottom")
+  
+  return(p)
+}
+
+# Helper function for plotting the monthly number of main events per cluster
+plot_events_monthly = function(data, title = "") {
+  p = ggplot(data, aes(x = month, y = n.events)) +
+    geom_bar(stat = "identity", fill = "steelblue", colour = "black") +
+    scale_x_discrete(breaks = c("Jan","Feb","Mar","Apr","May","Jun",
+                                "Jul","Aug","Sep","Oct","Nov","Dec")) +
+    coord_polar(start = pi/12) +
+    labs(title = title) +
+    theme_bw() +
+    theme(axis.title = element_blank(),
+          panel.ontop = TRUE, # change to FALSE for grid lines below the wind rose
+          panel.background = element_blank())
   
   return(p)
 }
