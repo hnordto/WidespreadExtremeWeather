@@ -4,14 +4,14 @@ library(tidyverse)
 
 # ---- CLEAN METADATA ----
 
-#prec_meta <- read_delim("//ad.nr.no/shares/samba_shared/Sommerstudenter/Henrik/Data/Precipitation/Hourly/meta_NR_sommerjobb_jun_23.csv", 
-#                        delim = ";", escape_double = FALSE, col_names = FALSE, 
-#                        trim_ws = TRUE)
-#stat_coord = prec_meta[,c("X1","X5","X6")]
-#setnames(stat_coord, "X1", "stat_id")
-#setnames(stat_coord, "X5", "mean_utmx")
-#setnames(stat_coord, "X6", "mean_utmy")
-#stat_coord = head(stat_coord, -1)
+prec_meta <- read_delim("//ad.nr.no/shares/samba_shared/Sommerstudenter/Henrik/Data/Precipitation/Hourly/meta_NR_sommerjobb_jun_23.csv", 
+                        delim = ";", escape_double = FALSE, col_names = FALSE, 
+                        trim_ws = TRUE)
+stat_coord = prec_meta[,c("X1","X5","X6")]
+setnames(stat_coord, "X1", "stat_id")
+setnames(stat_coord, "X5", "mean_utmx")
+setnames(stat_coord, "X6", "mean_utmy")
+stat_coord = head(stat_coord, -1)
 
 
 # ---- CLEAN PRECIPITATION DATA ----

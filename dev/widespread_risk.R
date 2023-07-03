@@ -288,3 +288,24 @@ ggarrange(events.monthly.099[[1]],
                     events.monthly.099[[4]],
                     ncol = 2, nrow = 2)) -> cluster.seasonal.099
 
+
+# Networks
+
+library(network)
+library(igraph)
+library(GGally)
+library(ggnetwork)
+
+stat.metadata = discharge.data[, head(.SD, 1), by = stat_id]
+coords.lonlat = UTMToLongLat(stat.metadata$mean_utmx, stat.metadata$mean_utmy, 33)[,2:3]
+rownames(coords.lonlat) = stat.metadata$stat_id
+
+
+net = network::network(mat.adj)
+net %v% "lat" = coords.lonlat[network.vertex.names(net), "Y"]
+net %v% "lon" = coords.lonlat[network.vertex.names(net), "X"]
+
+ggplot() +
+  geom_polygon(aes(x = long, y = lat, group = id), data = geo, fill = "grey90", colour = "grey40") -> p
+
+
