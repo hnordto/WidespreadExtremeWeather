@@ -5,5 +5,8 @@ library(lubridate)
 library(sp)
 library(rgdal)
 
+source("R/data_interfaces.R")
 source("R/preprocess_discharge.R")
+source("R/preprocess_precip.R")
 source("R/main_functions.R")
+source("R/plot_functions.R")
