@@ -97,7 +97,7 @@ plot_stations = function(data,
         coord_sf(xlim = c(min.X, max.X), ylim = c(min.Y, max.Y)) +
         geom_polygon(aes(x = long, y = lat, group = id), data = norway.lonlat,
                      fill = "grey90", colour = "grey40") +
-        geom_point(aes(x = X, y = Y), data = data.converted.sub, colour = "dodgerblue") +
+        geom_point(aes(x = X, y = Y), data = data.converted.sub, colour = "dodgerblue", size = 1.5) +
         labs(title = "Overview of Weather Stations Included in Data Set",
              subtitle = "Precipitation Data",
              x = element_blank(),
@@ -111,7 +111,7 @@ plot_stations = function(data,
       p = ggplot() + 
         geom_polygon(aes(x = long, y = lat, group = id), data = norway.lonlat,
                      fill = "grey90", colour = "grey40") +
-        geom_point(aes(x = X, y = Y), data = data.converted.sub, colour = "dodgerblue") +
+        geom_point(aes(x = X, y = Y), data = data.converted.sub, colour = "dodgerblue", size = 1.5) +
         labs(title = "Overview of Weather Stations Included in Data Set",
              subtitle = "Precipitation Data",
              x = element_blank(),

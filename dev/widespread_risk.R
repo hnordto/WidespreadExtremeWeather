@@ -13,7 +13,7 @@ source("R/data_interfaces.R")
 
 # ---- Load and preprocess data ----
 
-discharge = load_data()
+discharge = load_data(type = "discharge")
 discharge = discharge$discharge
 
 discharge.east = filter_region(discharge)
@@ -307,5 +307,20 @@ net %v% "lon" = coords.lonlat[network.vertex.names(net), "X"]
 
 ggplot() +
   geom_polygon(aes(x = long, y = lat, group = id), data = geo, fill = "grey90", colour = "grey40") -> p
+
+# Precipitation
+
+source("R/initialize.R")
+
+precip = load_data(type = "precip")
+precip = precip$precip
+
+precip.long = make_rec_precip(precip, reshape = T)
+
+precip.data = subset_precip(precip, precip.long)
+
+# Plot to check data quality
+
+plot_rec_precip(make_rec_precip(precip.data, reshape = T))
 
 

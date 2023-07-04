@@ -1,9 +1,21 @@
 
-extreme_threshold = function(data, probs = .9) {
+extreme_threshold = function(data, probs = .9, type) {
   
-  # Group by location and compute threshold
-  thresholds = data[,.(us = quantile(qt, probs = probs)), by = stat_id]
-  return(as.data.table(thresholds))
+  if (type == "discharge") {
+    
+    # Group by location and compute threshold
+    thresholds = data[,.(us = quantile(qt, probs = probs)), by = stat_id]
+    
+    return(as.data.table(thresholds))
+  
+    } else if (type == "precip") {
+    
+    qts = data[!data$qt == 0,]$qt
+    
+    threshold = as.numeric(quantile(qts, probs = probs))
+    
+    return (threshold)
+  }
 }
 
 extreme_events = function(data,
@@ -18,7 +30,7 @@ extreme_events = function(data,
     
     # If thresholds are not provided, run extreme_threshold()
     if (is.null(extreme_thresholds)) {
-      extreme_thresholds = extreme_threshold(data = data, probs = probs)
+      extreme_thresholds = extreme_threshold(data = data, probs = probs, type = "discharge")
     }
     
     # Iterate through all locations
@@ -44,6 +56,15 @@ extreme_events = function(data,
   } else if (type == "precip_fixed") {
     extreme.events = data[,c("stat_id", "date", "qt")]
     extreme.events = extreme.events[qt >= precip_fixed]
+  } else if (type == "precip") {
+    if (is.null(extreme_thresholds)){
+      extreme_thresholds = extreme_threshold(data = data, probs = probs, type = "precip")
+    }
+    
+    extreme.events = data[,c("stat_id", "date", "qt")]
+    extreme.events = extreme.events[qt > extreme_thresholds]
+    
+    
   }
   
   return(as.data.table(extreme.events))
