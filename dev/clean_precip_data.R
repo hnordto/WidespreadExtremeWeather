@@ -9,9 +9,10 @@ prec_meta <- read_delim("//ad.nr.no/shares/samba_shared/Sommerstudenter/Henrik/D
                         trim_ws = TRUE)
 stat_coord = prec_meta[,c("X1","X5","X6")]
 setnames(stat_coord, "X1", "stat_id")
-setnames(stat_coord, "X5", "mean_utmx")
-setnames(stat_coord, "X6", "mean_utmy")
+setnames(stat_coord, "X5", "mean_utmy")
+setnames(stat_coord, "X6", "mean_utmx")
 stat_coord = head(stat_coord, -1)
+stat_coord$stat_id = as.integer(stat_coord$stat_id)
 
 
 # ---- CLEAN PRECIPITATION DATA ----
@@ -42,47 +43,27 @@ prec = prec[month %in% summer.months]
 # Remove month columns
 prec[,month := NULL]
 
-# Create column for year
-prec$year = year(prec$date)
-
-# Subset years > 2015
-prec = prec[year > 2015]
-
-# Remove column for year
-prec[, year := NULL]
-
 # Handle negative values: Set to 0
 
 prec$qt = ifelse(prec$qt < 0, 0, prec$qt)
 
 if (FALSE) {
-  save(prec, file = "data/prec_clean.RData")
+  save(prec, file = "data/metdat_allyear.RData")
 }
 
+# Create column for year
+prec$year = year(prec$date)
 
-# Plot stations
+# Subset years >= 2013
+prec = prec[year >= 2013]
 
-plot_stations_prec = function(data,
-                              norway.lonlat) {
-  utm.x = data$mean_utmx
-  utm.y = data$mean_utmy
-  
-  coords.lonlat = UTMToLongLat(utm.x, utm.y, 33)
-  
-  data.converted = cbind(data, coords.lonlat)
-  data.converted.sub = data.converted[,head(.SD, 1), by = stat_id]
-  
-  p = ggplot() + 
-    geom_polygon(aes(x = long, y = lat, group = id), data = norway.lonlat,
-                 fill = "grey90", colour = "grey40") +
-    geom_point(aes(x = X, y = Y), data = data.converted.sub) +
-    theme_bw() +
-    theme(axis.text = element_blank(),
-          axis.ticks = element_blank(),
-          panel.grid = element_blank(),
-          legend.position = "right")
-  
-  return(p)
+# Remove column for year
+prec[, year := NULL]
+
+metdat = merge(prec, stat_coord, by = "stat_id", all.x = T, all.y = F)
+
+if (FALSE) {
+  save(metdat, file = "data/metdat.RData")
 }
-
+  
 

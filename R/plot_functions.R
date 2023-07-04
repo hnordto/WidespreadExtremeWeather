@@ -31,55 +31,99 @@ read_spatial_norway = function(path) {
   return(norway.lonlat)
 }
 
-plot_stations = function(nvedat,
+plot_stations = function(data,
                          norway.lonlat,
-                         station_ids = FALSE) {
-  utm.x = nvedat$mean_utmx
-  utm.y = nvedat$mean_utmy
+                         type = "discharge",
+                         station_ids = FALSE,
+                         zoom = TRUE) {
+  
+  
+  utm.x = data$mean_utmx
+  utm.y = data$mean_utmy
   
   coords.lonlat = UTMToLongLat(utm.x, utm.y, 33)
   
-  nvedat.converted = cbind(nvedat, coords.lonlat)
-  nvedat.converted.sub = nvedat.converted[, head(.SD, 1), by = stat_id]
+  data.converted = cbind(data, coords.lonlat)
+  data.converted.sub = data.converted[, head(.SD, 1), by = stat_id]
   
-  if (station_ids == TRUE) {
-    p = ggplot() +
-      geom_polygon(aes(x = long, y = lat, group = id), data = norway.lonlat,
-                   fill = "grey90", colour = "grey40") +
-      geom_text(aes(x = X, y = Y, label = stat_id, colour = reguleringsgrad_magasin), 
-                data = nvedat.converted.sub) +
-      labs(title = "Overview of Catchments Included in Data Set",
-           subtitle = "Discharge Data",
-           x = element_blank(),
-           y = element_blank(),
-           colour = "Degree of Regulation",
-           size = "Total Area") +
-      viridis::scale_color_viridis(option = "turbo") +
-      theme_bw() +
-      theme(axis.text = element_blank(),
-            axis.ticks = element_blank(),
-            panel.grid = element_blank(),
-            legend.position = "right")
-  } else {
-    p = ggplot() +
-      geom_polygon(aes(x = long, y = lat, group = id), data = norway.lonlat,
-                   fill = "grey90", colour = "grey40") +
-      geom_point(aes(x = X, y = Y, size = area_total, 
-                     colour = reguleringsgrad_magasin),
-                 data = nvedat.converted.sub) +
-      labs(title = "Overview of Catchments Included in Data Set",
-           subtitle = "Discharge Data",
-           x = element_blank(),
-           y = element_blank(),
-           colour = "Degree of Regulation",
-           size = "Total Area") +
-      viridis::scale_color_viridis(option = "turbo") +
-      theme_bw() +
-      theme(axis.text = element_blank(),
-            axis.ticks = element_blank(),
-            panel.grid = element_blank(),
-            legend.position = "right")
+  if (type == "discharge") {
+    if (station_ids == TRUE) {
+      p = ggplot() +
+        geom_polygon(aes(x = long, y = lat, group = id), data = norway.lonlat,
+                     fill = "grey90", colour = "grey40") +
+        geom_text(aes(x = X, y = Y, label = stat_id, colour = reguleringsgrad_magasin), 
+                  data = data.converted.sub) +
+        labs(title = "Overview of Catchments Included in Data Set",
+             subtitle = "Discharge Data",
+             x = element_blank(),
+             y = element_blank(),
+             colour = "Degree of Regulation",
+             size = "Total Area") +
+        viridis::scale_color_viridis(option = "turbo") +
+        theme_bw() +
+        theme(axis.text = element_blank(),
+              axis.ticks = element_blank(),
+              panel.grid = element_blank(),
+              legend.position = "right")
+    } else {
+      p = ggplot() +
+        geom_polygon(aes(x = long, y = lat, group = id), data = norway.lonlat,
+                     fill = "grey90", colour = "grey40") +
+        geom_point(aes(x = X, y = Y, size = area_total, 
+                       colour = reguleringsgrad_magasin),
+                   data = data.converted.sub) +
+        labs(title = "Overview of Catchments Included in Data Set",
+             subtitle = "Discharge Data",
+             x = element_blank(),
+             y = element_blank(),
+             colour = "Degree of Regulation",
+             size = "Total Area") +
+        viridis::scale_color_viridis(option = "turbo") +
+        theme_bw() +
+        theme(axis.text = element_blank(),
+              axis.ticks = element_blank(),
+              panel.grid = element_blank(),
+              legend.position = "right")
+    }
+  } else if (type == "precip") {
+    
+    if (zoom == TRUE) {
+      min.X = min(data.converted.sub$X) - 0.1
+      max.X = max(data.converted.sub$X) + 0.1
+      min.Y = min(data.converted.sub$Y) - 0.1
+      max.Y = max(data.converted.sub$Y) + 0.1
+      
+      p = ggplot() + 
+        coord_sf(xlim = c(min.X, max.X), ylim = c(min.Y, max.Y)) +
+        geom_polygon(aes(x = long, y = lat, group = id), data = norway.lonlat,
+                     fill = "grey90", colour = "grey40") +
+        geom_point(aes(x = X, y = Y), data = data.converted.sub, colour = "dodgerblue") +
+        labs(title = "Overview of Weather Stations Included in Data Set",
+             subtitle = "Precipitation Data",
+             x = element_blank(),
+             y = element_blank()) +
+        theme_bw() +
+        theme(axis.text = element_blank(),
+              axis.ticks = element_blank(),
+              panel.grid = element_blank(),
+              legend.position = "right")
+    } else {
+      p = ggplot() + 
+        geom_polygon(aes(x = long, y = lat, group = id), data = norway.lonlat,
+                     fill = "grey90", colour = "grey40") +
+        geom_point(aes(x = X, y = Y), data = data.converted.sub, colour = "dodgerblue") +
+        labs(title = "Overview of Weather Stations Included in Data Set",
+             subtitle = "Precipitation Data",
+             x = element_blank(),
+             y = element_blank()) +
+        theme_bw() +
+        theme(axis.text = element_blank(),
+              axis.ticks = element_blank(),
+              panel.grid = element_blank(),
+              legend.position = "right")
+    }
   }
+
   return(p)
 }
 
