@@ -308,6 +308,41 @@ net %v% "lon" = coords.lonlat[network.vertex.names(net), "X"]
 ggplot() +
   geom_polygon(aes(x = long, y = lat, group = id), data = geo, fill = "grey90", colour = "grey40") -> p
 
+# Networks
+
+uniquestations = unique(discharge.data$stat_id)
+
+mat = matrix(data = NA,
+             nrow = length(uniquestations),
+             ncol = length(uniquestations))
+
+for (i in 1:length(uniquestations)) {
+  this.station = uniquestations[i]
+  
+  this.qt = discharge.data[stat_id == this.station]$qt
+  
+  for (j in 1:length(uniquestations)) {
+    other.station = uniquestations[j]
+    other.qt = discharge.data[stat_id == other.station]$qt
+    
+    mat[j, i] = cor(this.qt, other.qt)
+  }
+}
+
+rownames(mat) = uniquestations
+colnames(mat) = uniquestations
+
+precip.data |> 
+  group_by(stat_id) |> 
+  summarise(n = n()) 
+
+discharge.data |> 
+  group_by(stat_id) |> 
+  summarise(n = n()) -> test.45
+
+
+mat |> as.data.frame() |> rownames_to_column("stat_id")
+
 # Precipitation
 
 source("R/initialize.R")
@@ -323,4 +358,15 @@ precip.data = subset_precip(precip, precip.long)
 
 plot_rec_precip(make_rec_precip(precip.data, reshape = T))
 
+plot_stations(precip.data, geo, type = "precip")
 
+precip.extreme = extreme_events(precip.data, probs = .95, type = "precip")
+
+precip.main = main_events(precip.extreme, type = "precip")
+
+precip.mat = event_matrix(precip.main, precip.extreme, deltaT = 12, type = "precip")
+
+n.cluster = cluster_optimum(precip.mat)
+km.obj = kmeans(precip.mat, 9)
+
+plot_clusters(km.obj, precip.data, geo, zoom=T)

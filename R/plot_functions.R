@@ -230,7 +230,8 @@ plot_event_matrix = function(mat) {
 
 plot_clusters = function(km.obj,
                          data,
-                         norway.lonlat) {
+                         norway.lonlat,
+                         zoom = FALSE) {
   
   stat.metadata = data[, head(.SD, 1), by = stat_id]
   
@@ -244,20 +245,42 @@ plot_clusters = function(km.obj,
   
   clusters.stat = cbind(clusters.stat, coords.lonlat)
   
-  p = ggplot() +
-    geom_polygon(aes(x = long, y = lat, group = id), data = norway.lonlat,
-                 fill = "grey90", colour = "grey40") +
-    geom_point(aes(x = X, y = Y, colour = factor(clus)), data = clusters.stat, size = 2) +
-    labs(title = "Geographical distribution of cluster members",
-         y = element_blank(),
-         x = element_blank(),
-         colour = "Group") +
-    #scale_color_brewer(palette = "Dark2") +
-    theme_bw() +
-    theme(axis.text = element_blank(),
-          axis.ticks = element_blank(),
-          panel.grid = element_blank(),
-          legend.position = "bottom")
+  if (zoom == TRUE) {
+    min.X = min(clusters.stat$X) - 0.1
+    max.X = max(clusters.stat$X) + 0.1
+    min.Y = min(clusters.stat$Y) - 0.1
+    max.Y = max(clusters.stat$Y) + 0.1
+    
+    p = ggplot() +
+      coord_sf(xlim = c(min.X, max.X), ylim = c(min.Y, max.Y)) +
+      geom_polygon(aes(x = long, y = lat, group = id), data = norway.lonlat,
+                   fill = "grey90", colour = "grey40") +
+      geom_point(aes(x = X, y = Y, colour = factor(clus)), data = clusters.stat, size = 2) +
+      labs(title = "Geographical distribution of cluster members",
+           y = element_blank(),
+           x = element_blank(),
+           colour = "Group") +
+      theme_bw() +
+      theme(axis.text = element_blank(),
+            axis.ticks = element_blank(),
+            panel.grid = element_blank(),
+            legend.position = "bottom")
+  } else {
+    p = ggplot() +
+      geom_polygon(aes(x = long, y = lat, group = id), data = norway.lonlat,
+                   fill = "grey90", colour = "grey40") +
+      geom_point(aes(x = X, y = Y, colour = factor(clus)), data = clusters.stat, size = 2) +
+      labs(title = "Geographical distribution of cluster members",
+           y = element_blank(),
+           x = element_blank(),
+           colour = "Group") +
+      #scale_color_brewer(palette = "Dark2") +
+      theme_bw() +
+      theme(axis.text = element_blank(),
+            axis.ticks = element_blank(),
+            panel.grid = element_blank(),
+            legend.position = "bottom")
+  }
   
   return(p)
 }
