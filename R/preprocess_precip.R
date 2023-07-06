@@ -108,9 +108,9 @@ subset_precip = function(metdat,
     
     uniquemeasurements = as.vector(unique(data.sub[, c("date")]))
     
-    if (any(data.sub$gap_size > remove_stat_on_gap)) {
+    if (any(data.sub$gap_size >= remove_stat_on_gap)) {
       flag.stat = c(flag.stat, this.station)
-    } else if (any(data.sub$gap_size > remove_date_on_gap)) {
+    } else if (any(data.sub$gap_size >= remove_date_on_gap)) {
       dates.to.flag = as_datetime(data.sub[gap_size > remove_date_on_gap]$date)
       
       flag.date = c(flag.date, dates.to.flag)

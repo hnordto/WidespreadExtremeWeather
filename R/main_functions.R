@@ -242,16 +242,15 @@ sus_index = function(mat, r.list) {
 
 require(cluster)
 
-pam.func = function(dta, k) {
-  dst = dist(dta, method = "euclidean")
-  pam.obj = pam(dst, k, nstart = 10)
+km.func = function(dta, k) {
+  km.obj = kmeans(dta, k, nstart = 10)
   
-  return(list(cluster = pam.obj$cluster))
+  return(list(cluster = km.obj$cluster))
 }
 
 cluster_optimum = function(data, K.max = 10, B = 50) {
   
-  clusGap.obj = clusGap(data, pam.func, K.max = K.max, B = B)
+  clusGap.obj = clusGap(data, km.func, K.max = K.max, B = B)
   
   num_clusters = maxSE(clusGap.obj$Tab[,3], clusGap.obj$Tab[,4], method = "firstSEmax")
   
