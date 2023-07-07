@@ -33,7 +33,6 @@ read_spatial_norway = function(path) {
 
 plot_stations = function(data,
                          norway.lonlat,
-                         type = "discharge",
                          station_ids = FALSE,
                          zoom = TRUE) {
   
@@ -46,7 +45,7 @@ plot_stations = function(data,
   data.converted = cbind(data, coords.lonlat)
   data.converted.sub = data.converted[, head(.SD, 1), by = stat_id]
   
-  if (type == "discharge") {
+  if (zoom == FALSE) {
     if (station_ids == TRUE) {
       p = ggplot() +
         geom_polygon(aes(x = long, y = lat, group = id), data = norway.lonlat,
@@ -85,43 +84,27 @@ plot_stations = function(data,
               panel.grid = element_blank(),
               legend.position = "right")
     }
-  } else if (type == "precip") {
+  } else if (zoom == TRUE) {
+
+    min.X = min(data.converted.sub$X) - 0.1
+    max.X = max(data.converted.sub$X) + 0.1
+    min.Y = min(data.converted.sub$Y) - 0.1
+    max.Y = max(data.converted.sub$Y) + 0.1
     
-    if (zoom == TRUE) {
-      min.X = min(data.converted.sub$X) - 0.1
-      max.X = max(data.converted.sub$X) + 0.1
-      min.Y = min(data.converted.sub$Y) - 0.1
-      max.Y = max(data.converted.sub$Y) + 0.1
-      
-      p = ggplot() + 
-        coord_sf(xlim = c(min.X, max.X), ylim = c(min.Y, max.Y)) +
-        geom_polygon(aes(x = long, y = lat, group = id), data = norway.lonlat,
-                     fill = "grey90", colour = "grey40") +
-        geom_point(aes(x = X, y = Y), data = data.converted.sub, colour = "dodgerblue", size = 1.5) +
-        labs(title = "Overview of Weather Stations Included in Data Set",
-             subtitle = "Precipitation Data",
-             x = element_blank(),
-             y = element_blank()) +
-        theme_bw() +
-        theme(axis.text = element_blank(),
-              axis.ticks = element_blank(),
-              panel.grid = element_blank(),
-              legend.position = "right")
-    } else {
-      p = ggplot() + 
-        geom_polygon(aes(x = long, y = lat, group = id), data = norway.lonlat,
-                     fill = "grey90", colour = "grey40") +
-        geom_point(aes(x = X, y = Y), data = data.converted.sub, colour = "dodgerblue", size = 1.5) +
-        labs(title = "Overview of Weather Stations Included in Data Set",
-             subtitle = "Precipitation Data",
-             x = element_blank(),
-             y = element_blank()) +
-        theme_bw() +
-        theme(axis.text = element_blank(),
-              axis.ticks = element_blank(),
-              panel.grid = element_blank(),
-              legend.position = "right")
-    }
+    p = ggplot() + 
+      coord_sf(xlim = c(min.X, max.X), ylim = c(min.Y, max.Y)) +
+      geom_polygon(aes(x = long, y = lat, group = id), data = norway.lonlat,
+                   fill = "grey90", colour = "grey40") +
+      geom_point(aes(x = X, y = Y), data = data.converted.sub, colour = "dodgerblue", size = 1.5) +
+      labs(title = "Overview of Weather Stations Included in Data Set",
+           subtitle = "Precipitation Data",
+           x = element_blank(),
+           y = element_blank()) +
+      theme_bw() +
+      theme(axis.text = element_blank(),
+            axis.ticks = element_blank(),
+            panel.grid = element_blank(),
+            legend.position = "right")
   }
 
   return(p)
