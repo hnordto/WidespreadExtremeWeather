@@ -213,7 +213,7 @@ event_matrix = function(main.events,
   return(mat)
 }
 
-# ---- SUSCEPTIBILITY INDEX ----
+# ---- WIDESPREAD RISK ----
 
 sus_index = function(mat, r.list) {
   n = ncol(mat)
@@ -235,6 +235,36 @@ sus_index = function(mat, r.list) {
   return (s.ind)
 }
 
+
+widespread_hazard = function(r.to.test,
+                             matrices,
+                             matrices.labs) {
+  hazard.estimation = data.table(mu = numeric(),
+                                 r = numeric(),
+                                 n = integer(),
+                                 n.tot = integer())
+  for (i in 1:length(matrices)) {
+    mat = matrices[[i]]
+    
+    for (j in 1:length(r.to.test)) {
+      this.r = r.to.test[j]
+      
+      event.freq = colMeans(mat) |> as.vector()
+      n.over.r = sum(event.freq >= this.r)
+      
+      hazard.estimation.temp = data.table(mu = matrices.labs[i],
+                                          r = this.r,
+                                          n = n.over.r,
+                                          n.tot = ncol(mat))
+      hazard.estimation = rbind(hazard.estimation, hazard.estimation.temp)
+    }
+  }
+  
+  hazard.estimation$prob = hazard.estimation$n / hazard.estimation$n.tot
+  
+  return(hazard.estimation)
+  
+}
 
 
 

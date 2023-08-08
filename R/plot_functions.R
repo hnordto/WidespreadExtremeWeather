@@ -283,3 +283,24 @@ plot_events_monthly = function(data, title = "") {
   
   return(p)
 }
+
+plot_widespread_hazard = function(hazard.estimation) {
+  
+  mats.labs = unique(hazard.estimation$mu)
+  
+  p = ggplot(hazard.estimation, aes(group = r)) +
+    geom_line(aes(x = mu, y = n, colour = factor(r)), linewidth = 1.2) +
+    geom_line(aes(x = mu, y = n.tot), colour = "black", linewidth = 1.2, linetype = 2) +
+    geom_point(aes(x = mu, y = n), colour = "gray50", size = 1.5) +
+    geom_point(aes(x = mu, y = n.tot),colour = "gray30", size = 1.7) +
+    labs(title = "Number of Main Events",
+         subtitle = "By extreme event threshold and where r% of the locations where affected",
+         x = "Extreme event threshold (quantile probability)",
+         y = "Number of main events",
+         colour = "r% of locations affected") +
+    scale_x_continuous(breaks = mats.labs) +
+    theme_bw() +
+    theme(legend.position = "bottom")
+  
+  return(p)
+}
