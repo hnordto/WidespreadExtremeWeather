@@ -214,7 +214,8 @@ plot_event_matrix = function(mat) {
 plot_clusters = function(km.obj,
                          data,
                          norway.lonlat,
-                         zoom = FALSE) {
+                         zoom = FALSE,
+                         threshold_label = NULL) {
   
   stat.metadata = data[, head(.SD, 1), by = stat_id]
   
@@ -240,6 +241,7 @@ plot_clusters = function(km.obj,
                    fill = "grey90", colour = "grey40") +
       geom_point(aes(x = X, y = Y, colour = factor(clus)), data = clusters.stat, size = 2) +
       labs(title = "Geographical distribution of cluster members",
+           subtitle = paste0("Extreme event threshold (quantile probability): ",threshold_label),
            y = element_blank(),
            x = element_blank(),
            colour = "Group") +
@@ -254,6 +256,7 @@ plot_clusters = function(km.obj,
                    fill = "grey90", colour = "grey40") +
       geom_point(aes(x = X, y = Y, colour = factor(clus)), data = clusters.stat, size = 2) +
       labs(title = "Geographical distribution of cluster members",
+           subtitle = paste0("Extreme event threshold (quantile probability): ",threshold_label),
            y = element_blank(),
            x = element_blank(),
            colour = "Group") +
