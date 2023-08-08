@@ -10,6 +10,7 @@ source("R/preprocess_discharge.R")
 source("R/main_functions.R")
 source("R/plot_functions.R")
 source("R/data_interfaces.R")
+source("R/initialize.R")
 
 # ---- Load and preprocess data ----
 
@@ -154,15 +155,15 @@ n.clusters.095 = cluster_optimum(mat0.95)
 n.clusters.0975 = cluster_optimum(mat0.975)
 n.clusters.099 = cluster_optimum(mat0.99)
 
-km.obj.09 = kmeans(mat, n.clusters.090)
-km.obj.095 = kmeans(mat, n.clusters.095)
-km.obj.0975 = kmeans(mat, n.clusters.0975)
-km.obj.099 = kmeans(mat, n.clusters.099)
+km.obj.09 = kmeans(mat0.9, n.clusters.090)
+km.obj.095 = kmeans(mat0.95, n.clusters.095)
+km.obj.0975 = kmeans(mat0.975, n.clusters.0975)
+km.obj.099 = kmeans(mat0.99, n.clusters.099)
 
-clusterplot.09 = plot_clusters(km.obj.09, discharge.data, geo)
-clusterplot.095 = plot_clusters(km.obj.095, discharge.data, geo)
-clusterplot.0975 = plot_clusters(km.obj.0975, discharge.data, geo)
-clusterplot.099 = plot_clusters(km.obj.099, discharge.data, geo)
+clusterplot.09 = plot_clusters(km.obj.09, discharge.data, geo, threshold_label = "0.9")
+clusterplot.095 = plot_clusters(km.obj.095, discharge.data, geo, threshold_label = "0.95")
+clusterplot.0975 = plot_clusters(km.obj.0975, discharge.data, geo, threshold_label = "0.975")
+clusterplot.099 = plot_clusters(km.obj.099, discharge.data, geo, threshold_label = "0.99")
 
 clusters = ggarrange(clusterplot.09,
                      clusterplot.095,
@@ -178,7 +179,9 @@ ggarrange(events.monthly.09[[1]],
                     events.monthly.09[[3]],
                     events.monthly.09[[4]],
                     events.monthly.09[[5]],
-                    ncol = 2, nrow = 2)) -> cluster.seasonal.09
+                    events.monthly.09[[6]],
+                    events.monthly.09[[7]],
+                    ncol = 2, nrow = 3)) -> cluster.seasonal.09
 
 # 0.95
 
@@ -297,3 +300,22 @@ n.cluster = cluster_optimum(precip.mat)
 km.obj = kmeans(precip.mat, 9)
 
 plot_clusters(km.obj, precip.data, geo, zoom=T)
+
+
+
+# Analysis
+quantiles = c(0.9, 0.95, 0.975, 0.99)
+
+for (i in 1:length(quantiles)) {
+  this.quantile = quantiles[i]
+  
+  extreme.events = extreme_events(precip.data, probs = this.quantile, type = "precip")
+  
+  main.events = main_events(extreme.events, type = "precip")
+  
+  mat = event_matrix(main.events, extreme.events, deltaT = 12, type = "precip")
+  
+  mat.name = paste0("mat",this.quantile)
+  
+  assign(mat.name, mat)
+}
