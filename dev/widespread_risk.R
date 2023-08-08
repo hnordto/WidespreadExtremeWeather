@@ -76,58 +76,17 @@ ggplot(n.main.events.df, aes(x = threshold, y = n)) +
 
 
 # ---- Test different extreme thresholds ----
-# Test different thresholds
 
-extreme.thresholds.range = c(0.9, 0.95, 0.975, 0.99)
+r.to.test = c(0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
+mats = list(mat0.9, mat0.95, mat0.975, mat0.99)
+mats.lab = c(0.9, 0.95, 0.975, 0.99)
 
-store = data.table(mu = numeric(),
-                   r = numeric(),
-                   n = integer())
-
-# Do not run. Load "store.RData" instead.
-if (FALSE) {
-  for (i in 1:length(extreme.thresholds.range)) {
-    this.threshold = extreme.thresholds.range[i]
-    
-    extreme.threshold = extreme_threshold(discharge.data, probs = this.threshold)
-    
-    extreme.events = extreme_events(discharge.data, extreme_thresholds = extreme.threshold)
-    
-    main.events = main_events(extreme.events)
-    
-    mat = event_matrix(main.events, extreme.events)
-    
-    r.to.test = c(0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
-    
-    for (j in 1:length(r.to.test)) {
-      this.r = r.to.test[j]
-      
-      event.freq = colMeans(mat) |> as.vector()
-      n.over.r = sum(event.freq >= this.r)
-      
-      store.temp = data.table(mu = this.threshold,
-                              r = this.r,
-                              n = n.over.r)
-      store = rbind(store, store.temp)
-      
-    }
-  } 
-}
+hazard.estimation = data.table(mu = numeric(),
+                               r = numeric(),
+                               n = integer(),
+                               n.tot = integer())
 
 
-# Plot n main events per r% locations affected and different extreme thresholds
-# Not suitable to put this in a separate function
-
-ggplot(store, aes(x = mu, y = n, group = r)) +
-  geom_line(aes(colour = factor(r)), linewidth = 1.2) +
-  geom_point(colour = "gray50", size = 1.5) +
-  labs(title = "Number of Main Events",
-       subtitle = "By extreme event threshold and where r% of the locations where affected",
-    x = "Extreme event threshold (quantile probability)",
-    y = "Number of main events",
-    colour = "r% of stations affected") +
-  theme_bw() +
-  theme(legend.position = "bottom")
 
 # ---- Maps ----
 
@@ -135,39 +94,7 @@ geo = read_spatial_norway("//ad.nr.no/shares/samba_shared/Sommerstudenter/Henrik
 
 stations_plot = plot_stations(discharge.data, geo, station_ids = T)
 
-# ---- Fourieranalyse ----
-# discharge::fourierAnalysis
 
-discharge.sub = discharge.data[stat_id == 200011]
-
-
-# ---- susceptibility index ----
-
-# p(%) = 100 (x/(n+1)) 
-# n is the total number of events affecting at least one of the stations in the region
-# x is the number of events where r% of the stations were affected.
-
-n = ncol(mat)
-
-# Development of helper functions to calculate the number of events where r% of the stations where affected
-
-r = c(0.5)
-
-for (i in 1:length(r)) {
-  this.r = r[i]
-  
-  event.freq = as.vector(colMeans(mat))
-  
-  x.over.r = sum(event.freq >= this.r)
-  
-  x = x.over.r
-}
-
-s.ind = x/(n+1)
-
-
-discharge.sub = discharge.data[stat_id == 200011]
-discharge.sub.qt = discharge.sub$qt
 
 # ---- ACF ----
 
@@ -209,7 +136,7 @@ quantiles = c(0.9, 0.95, 0.975, 0.99)
 for (i in 1:length(quantiles)) {
   this.quantile = quantiles[i]
   
-  thresholds = extreme_threshold(discharge.data, probs = this.quantile)
+  thresholds = extreme_threshold(discharge.data, probs = this.quantile, type = "discharge")
   
   extreme.events = extreme_events(discharge.data, thresholds)
   
@@ -325,7 +252,7 @@ for (i in 1:length(uniquestations)) {
     other.station = uniquestations[j]
     other.qt = discharge.data[stat_id == other.station]$qt
     
-    mat[j, i] = cor(this.qt, other.qt)
+    mat[j, i] = cor(this.qt, other.qt) 
   }
 }
 
