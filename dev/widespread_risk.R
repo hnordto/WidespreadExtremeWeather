@@ -24,6 +24,204 @@ discharge.data = subset_discharge(discharge.east,
                                   discharge.east.long,
                                   day_threshold = 364)
 
+
+# ---- Main analysis steps ----
+
+set.seed(123)
+
+geo = read_spatial_norway("//ad.nr.no/shares/samba_shared/Sommerstudenter/Henrik/Nyttig/Norgeomriss/")
+
+# k-means
+
+# NB! If function returns > 10, increase K.max argument an re-run
+
+quantiles = c(0.9, 0.95, 0.975, 0.99)
+
+for (i in 1:length(quantiles)) {
+  this.quantile = quantiles[i]
+  
+  thresholds = extreme_threshold(discharge.data, probs = this.quantile, type = "discharge")
+  
+  extreme.events = extreme_events(discharge.data, thresholds)
+  
+  main.events = main_events(extreme.events)
+  
+  mat = event_matrix(main.events, extreme.events)
+  
+  mat.name = paste0("mat",this.quantile)
+  
+  assign(mat.name, mat)
+}
+
+r.to.test = c(0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
+mats = list(mat0.9, mat0.95, mat0.975, mat0.99)
+mats.lab = c(0.9, 0.95, 0.975, 0.99)
+
+hazard.estimation.discharge = widespread_hazard(r.to.test, mats, mats.lab)
+
+plot_widespread_hazard(hazard.estimation.discharge)
+
+n.clusters.090 = cluster_optimum(mat0.9)
+n.clusters.095 = cluster_optimum(mat0.95)
+n.clusters.0975 = cluster_optimum(mat0.975)
+n.clusters.099 = cluster_optimum(mat0.99)
+
+km.obj.09 = kmeans(mat0.9, n.clusters.090)
+km.obj.095 = kmeans(mat0.95, n.clusters.095)
+km.obj.0975 = kmeans(mat0.975, n.clusters.0975)
+km.obj.099 = kmeans(mat0.99, n.clusters.099)
+
+clusterplot.09 = plot_clusters(km.obj.09, discharge.data, geo, threshold_label = "0.9", zoom=T, zoom_padding = 0.5)
+clusterplot.095 = plot_clusters(km.obj.095, discharge.data, geo, threshold_label = "0.95", zoom = T, zoom_padding = 0.5)
+clusterplot.0975 = plot_clusters(km.obj.0975, discharge.data, geo, threshold_label = "0.975", zoom = T, zoom_padding = 0.5)
+clusterplot.099 = plot_clusters(km.obj.099, discharge.data, geo, threshold_label = "0.99", zoom = T, zoom_padding = 0.5)
+
+clusters = grid.arrange(clusterplot.09, clusterplot.095, clusterplot.0975, clusterplot.099)
+
+# 0.9
+
+events.monthly.09 = cluster_events_monthly(km.obj.09, mat0.9, "0.9")
+
+
+grid.arrange(events.monthly.09[[1]], 
+            events.monthly.09[[2]],
+            events.monthly.09[[3]],
+            events.monthly.09[[4]],
+            events.monthly.09[[5]],
+            events.monthly.09[[6]],
+            events.monthly.09[[7]],
+            layout_matrix = rbind(c(1,1,2,3),
+                                  c(1,1,4,5),
+                                  c(1,1,6,7))) -> cluster.seasonal.09
+
+# 0.95
+
+events.monthly.095 = cluster_events_monthly(km.obj.095, mat0.95, "0.95")
+
+ggarrange(events.monthly.095[[1]],
+          ggarrange(events.monthly.095[[2]],
+                    events.monthly.095[[3]],
+                    events.monthly.095[[4]],
+                    events.monthly.095[[5]],
+                    events.monthly.095[[6]],
+                    events.monthly.095[[7]],
+                    ncol = 3, nrow = 2)) -> cluster.seasonal.095
+
+# 0.975
+
+events.monthly.0975 = cluster_events_monthly(km.obj.0975, mat0.975, "0.975")
+
+ggarrange(events.monthly.0975[[1]],
+          ggarrange(events.monthly.0975[[2]],
+                    events.monthly.0975[[3]],
+                    events.monthly.0975[[4]],
+                    events.monthly.0975[[5]],
+                    events.monthly.0975[[6]],
+                    ncol = 3, nrow = 2)) -> cluster.seasonal.0975
+
+# 0.99
+
+events.monthly.099 = cluster_events_monthly(km.obj.099, mat0.99, "0.99")
+
+ggarrange(events.monthly.099[[1]],
+          ggarrange(events.monthly.099[[2]],
+                    events.monthly.099[[3]],
+                    events.monthly.099[[4]],
+                    ncol = 2, nrow = 2)) -> cluster.seasonal.099
+
+
+
+
+# Precipitation
+
+set.seed(123)
+
+source("R/initialize.R")
+
+precip = load_data(type = "precip")
+precip = precip$precip
+
+precip.long = make_rec_precip(precip, reshape = T)
+
+precip.data = subset_precip(precip, precip.long)
+
+# Plot to check data quality
+
+plot_rec_precip(make_rec_precip(precip.data, reshape = T))
+
+plot_stations(precip.data, geo, type = "precip")
+
+precip.extreme = extreme_events(precip.data, probs = .95, type = "precip")
+
+precip.main = main_events(precip.extreme, type = "precip")
+
+precip.mat = event_matrix(precip.main, precip.extreme, deltaT = 12, type = "precip")
+
+n.cluster = cluster_optimum(precip.mat)
+km.obj = kmeans(precip.mat, 9)
+
+plot_clusters(km.obj, precip.data, geo, zoom=T)
+
+
+
+# Analysis
+quantiles = c(0.95, 0.975, 0.99, 0.999)
+
+for (i in 1:length(quantiles)) {
+  this.quantile = quantiles[i]
+  
+  extreme.events = extreme_events(precip.data, probs = this.quantile, type = "precip")
+  
+  main.events = main_events(extreme.events, type = "precip")
+  
+  mat = event_matrix(main.events, extreme.events, deltaT = 12, type = "precip")
+  
+  mat.name = paste0("mat",this.quantile)
+  
+  assign(mat.name, mat)
+}
+
+extreme_threshold(precip.data, probs = 0.99, type = "precip")
+
+r.to.test = c(0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
+mats = list(mat0.95, mat0.975, mat0.99, mat0.999)
+mats.lab = c(0.95, 0.975, 0.99, 0.999)
+
+widespread.hazard.prec = widespread_hazard(r.to.test,
+                                           mats,
+                                           mats.lab)
+
+plot_widespread_hazard(widespread.hazard.prec)
+
+n.clusters.095 = cluster_optimum(mat0.95)
+n.clusters.0975 = cluster_optimum(mat0.975)
+n.clusters.099 = cluster_optimum(mat0.99)
+n.clusters.0999 = cluster_optimum(mat0.999)
+
+km.obj.095 = kmeans(mat0.95, n.clusters.095)
+km.obj.0975 = kmeans(mat0.975, n.clusters.0975)
+km.obj.099 = kmeans(mat0.99, n.clusters.099)
+km.obj.0999 = kmeans(mat0.999, n.clusters.0999)
+
+clusterplot.095 = plot_clusters(km.obj.095, precip.data, geo, threshold_label = "0.95", zoom=T)
+clusterplot.0975 = plot_clusters(km.obj.0975, precip.data, geo, threshold_label = "0.975", zoom=T)
+clusterplot.099 = plot_clusters(km.obj.099, precip.data, geo, threshold_label = "0.99", zoom = T)
+clusterplot.0999 = plot_clusters(km.obj.0999, precip.data, geo, threshold_label = "0.999", zoom=T)
+
+clusters = grid.arrange(clusterplot.095, clusterplot.0975, clusterplot.099, clusterplot.0999)
+
+events.weekly.099 = cluster_events_weekly(km.obj.099, mat0.99, "0.99")
+
+grid.arrange(events.weekly.099[[1]], 
+             events.weekly.099[[2]],
+             events.weekly.099[[3]],
+             layout_matrix = rbind(c(1,1,2),
+                                   c(1,1,3))) -> cluster.seasonal.09
+
+
+# =====================
+# ---- Experimental ----
+
 # ---- Identify extreme events ----
 # Compute extreme thresholds
 thresholds = extreme_threshold(discharge.data, probs = .7)
@@ -82,12 +280,9 @@ r.to.test = c(0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
 mats = list(mat0.9, mat0.95, mat0.975, mat0.99)
 mats.lab = c(0.9, 0.95, 0.975, 0.99)
 
-hazard.estimation = data.table(mu = numeric(),
-                               r = numeric(),
-                               n = integer(),
-                               n.tot = integer())
+hazard.estimation.discharge = widespread_hazard(r.to.test, mats, mats.lab)
 
-
+plot_widespread_hazard(hazard.estimation.discharge)
 
 # ---- Maps ----
 
@@ -123,101 +318,6 @@ for (i in 1:length(all.stations)) {
   
   acf.lag7 = c(acf.lag7, acf$acf[7])
 }
-
-# ---- Clustering ----
-
-set.seed(123)
-
-# k-means
-
-# NB! If function returns > 10, increase K.max argument an re-run
-
-quantiles = c(0.9, 0.95, 0.975, 0.99)
-
-for (i in 1:length(quantiles)) {
-  this.quantile = quantiles[i]
-  
-  thresholds = extreme_threshold(discharge.data, probs = this.quantile, type = "discharge")
-  
-  extreme.events = extreme_events(discharge.data, thresholds)
-  
-  main.events = main_events(extreme.events)
-  
-  mat = event_matrix(main.events, extreme.events)
-  
-  mat.name = paste0("mat",this.quantile)
-  
-  assign(mat.name, mat)
-}
-
-n.clusters.090 = cluster_optimum(mat0.9)
-n.clusters.095 = cluster_optimum(mat0.95)
-n.clusters.0975 = cluster_optimum(mat0.975)
-n.clusters.099 = cluster_optimum(mat0.99)
-
-km.obj.09 = kmeans(mat0.9, n.clusters.090)
-km.obj.095 = kmeans(mat0.95, n.clusters.095)
-km.obj.0975 = kmeans(mat0.975, n.clusters.0975)
-km.obj.099 = kmeans(mat0.99, n.clusters.099)
-
-clusterplot.09 = plot_clusters(km.obj.09, discharge.data, geo, threshold_label = "0.9")
-clusterplot.095 = plot_clusters(km.obj.095, discharge.data, geo, threshold_label = "0.95")
-clusterplot.0975 = plot_clusters(km.obj.0975, discharge.data, geo, threshold_label = "0.975")
-clusterplot.099 = plot_clusters(km.obj.099, discharge.data, geo, threshold_label = "0.99")
-
-clusters = ggarrange(clusterplot.09,
-                     clusterplot.095,
-                     clusterplot.0975,
-                     clusterplot.099)
-
-# 0.9
-
-events.monthly.09 = cluster_events_monthly(km.obj.09, mat0.9, "0.9")
-
-ggarrange(events.monthly.09[[1]],
-          ggarrange(events.monthly.09[[2]],
-                    events.monthly.09[[3]],
-                    events.monthly.09[[4]],
-                    events.monthly.09[[5]],
-                    events.monthly.09[[6]],
-                    events.monthly.09[[7]],
-                    ncol = 2, nrow = 3)) -> cluster.seasonal.09
-
-# 0.95
-
-events.monthly.095 = cluster_events_monthly(km.obj.095, mat0.95, "0.95")
-
-ggarrange(events.monthly.095[[1]],
-          ggarrange(events.monthly.095[[2]],
-                    events.monthly.095[[3]],
-                    events.monthly.095[[4]],
-                    events.monthly.095[[5]],
-                    events.monthly.095[[6]],
-                    events.monthly.095[[7]],
-                    ncol = 3, nrow = 2)) -> cluster.seasonal.095
-
-# 0.975
-
-events.monthly.0975 = cluster_events_monthly(km.obj.0975, mat0.975, "0.975")
-
-ggarrange(events.monthly.0975[[1]],
-          ggarrange(events.monthly.0975[[2]],
-                    events.monthly.0975[[3]],
-                    events.monthly.0975[[4]],
-                    events.monthly.0975[[5]],
-                    events.monthly.0975[[6]],
-                    ncol = 3, nrow = 2)) -> cluster.seasonal.0975
-
-# 0.99
-
-events.monthly.099 = cluster_events_monthly(km.obj.099, mat0.99, "0.99")
-
-ggarrange(events.monthly.099[[1]],
-          ggarrange(events.monthly.099[[2]],
-                    events.monthly.099[[3]],
-                    events.monthly.099[[4]],
-                    ncol = 2, nrow = 2)) -> cluster.seasonal.099
-
 
 # Networks
 
@@ -272,50 +372,4 @@ discharge.data |>
 
 
 mat |> as.data.frame() |> rownames_to_column("stat_id")
-
-# Precipitation
-
-source("R/initialize.R")
-
-precip = load_data(type = "precip")
-precip = precip$precip
-
-precip.long = make_rec_precip(precip, reshape = T)
-
-precip.data = subset_precip(precip, precip.long)
-
-# Plot to check data quality
-
-plot_rec_precip(make_rec_precip(precip.data, reshape = T))
-
-plot_stations(precip.data, geo, type = "precip")
-
-precip.extreme = extreme_events(precip.data, probs = .95, type = "precip")
-
-precip.main = main_events(precip.extreme, type = "precip")
-
-precip.mat = event_matrix(precip.main, precip.extreme, deltaT = 12, type = "precip")
-
-n.cluster = cluster_optimum(precip.mat)
-km.obj = kmeans(precip.mat, 9)
-
-plot_clusters(km.obj, precip.data, geo, zoom=T)
-
-
-
-# Analysis
-quantiles = c(0.9, 0.95, 0.975, 0.99)
-
-for (i in 1:length(quantiles)) {
-  this.quantile = quantiles[i]
-  
-  extreme.events = extreme_events(precip.data, probs = this.quantile, type = "precip")
-  
-  main.events = main_events(extreme.events, type = "precip")
-  
-  mat = event_matrix(main.events, extreme.events, deltaT = 12, type = "precip")
-  
-  mat.name = paste0("mat",this.quantile)
-  
-  assign(mat.name, mat)
-}
+             

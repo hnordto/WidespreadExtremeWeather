@@ -1,0 +1,116 @@
+---
+title: "Appendix B"
+output: pdf_document
+date: "2023-08-10"
+---
+
+```{r warning=F, message=F, error=F}
+set.seed(123)
+
+source("R/initialize.R")
+
+# Load shapefiles
+geo = read_spatial_norway("//ad.nr.no/shares/samba_shared/Sommerstudenter/Henrik/Nyttig/Norgeomriss/")
+
+precip = load_data(type = "precip")
+precip = precip$precip
+
+precip.long = make_rec_precip(precip, reshape = T)
+
+precip.data = subset_precip(precip, precip.long)
+```
+
+
+```{r warning=F,message=F,error=F}
+# Analysis
+quantiles = c(0.95, 0.975, 0.99, 0.999)
+
+for (i in 1:length(quantiles)) {
+  this.quantile = quantiles[i]
+  
+  extreme.events = extreme_events(precip.data, probs = this.quantile, type = "precip")
+  
+  main.events = main_events(extreme.events, type = "precip")
+  
+  mat = event_matrix(main.events, extreme.events, deltaT = 12, type = "precip")
+  
+  mat.name = paste0("mat",this.quantile)
+  
+  assign(mat.name, mat)
+}
+```
+
+```{r warning=F,message=F,error=F}
+r.to.test = c(0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
+mats = list(mat0.95, mat0.975, mat0.99, mat0.999)
+mats.lab = c(0.95, 0.975, 0.99, 0.999)
+
+widespread.hazard.prec = widespread_hazard(r.to.test,
+                                           mats,
+                                           mats.lab)
+
+plot_widespread_hazard(widespread.hazard.prec)
+```
+
+```{r warning=F,message=F,error=F}
+n.clusters.095 = cluster_optimum(mat0.95)
+n.clusters.0975 = cluster_optimum(mat0.975)
+n.clusters.099 = cluster_optimum(mat0.99)
+n.clusters.0999 = cluster_optimum(mat0.999)
+
+km.obj.095 = kmeans(mat0.95, n.clusters.095)
+km.obj.0975 = kmeans(mat0.975, n.clusters.0975)
+km.obj.099 = kmeans(mat0.99, n.clusters.099)
+km.obj.0999 = kmeans(mat0.999, n.clusters.0999)
+
+clusterplot.095 = plot_clusters(km.obj.095, precip.data, geo, threshold_label = "0.95", zoom=T)
+clusterplot.0975 = plot_clusters(km.obj.0975, precip.data, geo, threshold_label = "0.975", zoom=T)
+clusterplot.099 = plot_clusters(km.obj.099, precip.data, geo, threshold_label = "0.99", zoom = T)
+clusterplot.0999 = plot_clusters(km.obj.0999, precip.data, geo, threshold_label = "0.999", zoom=T)
+
+(clusters = grid.arrange(clusterplot.095, clusterplot.0975, clusterplot.099, clusterplot.0999))
+```
+
+```{r warning=F,message=F,error=F}
+
+events.weekly.095 = cluster_events_weekly(km.obj.095, mat0.95, "0.95")
+grid.arrange(events.weekly.095[[1]], 
+             events.weekly.095[[2]],
+             events.weekly.095[[3]],
+             layout_matrix = rbind(c(1,1,2),
+                                   c(1,1,3))) -> cluster.seasonal.095
+
+
+events.weekly.0975 = cluster_events_weekly(km.obj.0975, mat0.975, "0.975")
+grid.arrange(events.weekly.0975[[1]], 
+             events.weekly.0975[[2]],
+             layout_matrix = rbind(c(1,1,NA),
+                                   c(1,1,2))) -> cluster.seasonal.0975
+
+
+events.weekly.099 = cluster_events_weekly(km.obj.099, mat0.99, "0.99")
+grid.arrange(events.weekly.099[[1]], 
+             events.weekly.099[[2]],
+             events.weekly.099[[3]],
+             layout_matrix = rbind(c(1,1,2),
+                                   c(1,1,3))) -> cluster.seasonal.099
+
+#events.weekly.0999 = cluster_events_weekly(km.obj.0999, mat0.999, "0.999")
+#grid.arrange(events.weekly.0999[[1]], 
+#             events.weekly.0999[[2]],
+#             events.weekly.0999[[3]],
+#             events.weekly.0999[[4]],
+#             events.weekly.0999[[5]],
+#             events.weekly.0999[[6]],
+#             events.weekly.0999[[7]],
+#             events.weekly.0999[[8]],
+#             events.weekly.0999[[9]],
+#             events.weekly.0999[[10]],
+#             events.weekly.0999[[11]],
+#             layout_matrix = rbind(c(1,1,2,3),
+#                                   c(1,1,4,5),
+#                                   c(1,1,6,7),
+#                                   c(8,9,10,11))) -> cluster.seasonal.099
+
+```
+

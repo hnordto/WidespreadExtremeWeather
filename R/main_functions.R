@@ -288,7 +288,7 @@ cluster_optimum = function(data, K.max = 10, B = 50) {
 }
 
 # Helper function for separating event matrix according to a clustering result
-subset_mat_on_cluster = function(km.obj,mat) {
+subset_mat_on_cluster = function(km.obj,mat, type) {
   cluster.df = data.table(stat_id = as.integer(names(km.obj$cluster)),
                           clus = as.integer(km.obj$cluster))
   uniqueclusters = unique(cluster.df$clus)
@@ -304,15 +304,25 @@ subset_mat_on_cluster = function(km.obj,mat) {
     
     events = as.data.table(colnames(mat.subset))
     setnames(events, "V1", "date")
-    events$month = month(events$date)
     
-    events |> group_by(month) |> summarise(n.events = n()) -> events.df
+    if (type == "month") {
+      events$month = month(events$date)
+      
+      events |> group_by(month) |> summarise(n.events = n()) -> events.df
+      
+      events.df$month = month.abb[events.df$month]
+      events.df$month = factor(events.df$month,
+                               levels = c("Jan","Feb","Mar","Apr","May","Jun",
+                                          "Jul","Aug","Sep","Oct","Nov","Dec"))
+    } else if (type == "week") {
+      events$week = week(events$date)
+      
+      events |> group_by(week) |> summarise(n.events = n()) -> events.df
+      
+      events.df$week = factor(events.df$week)
+    }
     
-    events.df$month = month.abb[events.df$month]
-    events.df$month = factor(events.df$month,
-                             levels = c("Jan","Feb","Mar","Apr","May","Jun",
-                                        "Jul","Aug","Sep","Oct","Nov","Dec"))
-    
+
     l = append(l, list(events.df))
   }
   return(l)
@@ -331,12 +341,12 @@ cluster_events_monthly = function(km.obj, mat, extreme_threshold = "") {
   all$month = factor(all$month,
                      levels = c("Jan","Feb","Mar","Apr","May","Jun",
                                 "Jul","Aug","Sep","Oct","Nov","Dec"))
-  plot_all = plot_events_monthly(all, title = paste0("Seasonal event distribution at percentile ",extreme_threshold))
+  plot_all = plot_events_monthly(all, title = paste0("Seasonal distribution of events, extreme threshold ",extreme_threshold))
   
   plots = list()
   plots = append(plots, list(plot_all))
   
-  l = subset_mat_on_cluster(km.obj, mat)
+  l = subset_mat_on_cluster(km.obj, mat, type = "month")
   
   
   
@@ -347,6 +357,32 @@ cluster_events_monthly = function(km.obj, mat, extreme_threshold = "") {
     
     plots = append(plots, list(plot))
     
+  }
+  
+  return(plots)
+  
+}
+
+cluster_events_weekly = function(km.obj, mat, extreme_threshold = "") {
+  all = as.data.table(colnames(mat))
+  setnames(all, "V1", "date")
+  all$week = week(all$date)
+  
+  all = all |> group_by(week) |> summarise(n.events = n())
+  all$week = factor(all$week)
+  
+  plot_all = plot_events_weekly(all, title = paste0("Seasonal distribution of events, extreme threshold ", extreme_threshold))
+  
+  plots = list()
+  plots = append(plots, list(plot_all))
+  
+  l = subset_mat_on_cluster(km.obj, mat, type = "week")
+  
+  for (i in 1:length(l)) {
+    this.cluster = l[[i]]
+    
+    plot = plot_events_weekly(this.cluster, title = paste0("Cluster ",i))
+    plots = append(plots, list(plot))
   }
   
   return(plots)

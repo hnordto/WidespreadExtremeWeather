@@ -215,7 +215,8 @@ plot_clusters = function(km.obj,
                          data,
                          norway.lonlat,
                          zoom = FALSE,
-                         threshold_label = NULL) {
+                         threshold_label = NULL,
+                         zoom_padding = 0.1) {
   
   stat.metadata = data[, head(.SD, 1), by = stat_id]
   
@@ -230,10 +231,10 @@ plot_clusters = function(km.obj,
   clusters.stat = cbind(clusters.stat, coords.lonlat)
   
   if (zoom == TRUE) {
-    min.X = min(clusters.stat$X) - 0.1
-    max.X = max(clusters.stat$X) + 0.1
-    min.Y = min(clusters.stat$Y) - 0.1
-    max.Y = max(clusters.stat$Y) + 0.1
+    min.X = min(clusters.stat$X) - zoom_padding
+    max.X = max(clusters.stat$X) + zoom_padding
+    min.Y = min(clusters.stat$Y) - zoom_padding
+    max.Y = max(clusters.stat$Y) + zoom_padding
     
     p = ggplot() +
       coord_sf(xlim = c(min.X, max.X), ylim = c(min.Y, max.Y)) +
@@ -281,7 +282,20 @@ plot_events_monthly = function(data, title = "") {
     labs(title = title) +
     theme_bw() +
     theme(axis.title = element_blank(),
-          panel.ontop = TRUE, # change to FALSE for grid lines below the wind rose
+          panel.ontop = TRUE, 
+          panel.background = element_blank())
+  
+  return(p)
+}
+
+plot_events_weekly = function(data, title = "") {
+  p = ggplot(data, aes(x = `week`, y = n.events)) +
+    geom_bar(stat = "identity", fill = "steelblue", colour = "black") +
+    coord_polar(start = pi/12) +
+    labs(title = title) +
+    theme_bw() +
+    theme(axis.title = element_blank(),
+          panel.ontop = TRUE,
           panel.background = element_blank())
   
   return(p)
@@ -297,10 +311,10 @@ plot_widespread_hazard = function(hazard.estimation) {
     geom_point(aes(x = mu, y = n), colour = "gray50", size = 1.5) +
     geom_point(aes(x = mu, y = n.tot),colour = "gray30", size = 1.7) +
     labs(title = "Number of Main Events",
-         subtitle = "By extreme event threshold and where r% of the locations where affected",
+         subtitle = "By extreme event threshold and proportion of locations affected",
          x = "Extreme event threshold (quantile probability)",
          y = "Number of main events",
-         colour = "r% of locations affected") +
+         colour = "Minimum proportion of locations affected") +
     scale_x_continuous(breaks = mats.labs) +
     theme_bw() +
     theme(legend.position = "bottom")

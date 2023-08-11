@@ -1,0 +1,249 @@
+---
+title: "Appendix A"
+output: pdf_document
+date: "2023-08-10"
+---
+
+# Region: East
+
+```{r warning=F,message=F,error=F}
+setwd("//ad.nr.no/shares/samba_shared/Sommerstudenter/Henrik/WidespreadExtremeWeather")
+
+set.seed(123)
+
+# Load functions
+source("R/initialize.R")
+
+# Load shapefiles
+geo = read_spatial_norway("//ad.nr.no/shares/samba_shared/Sommerstudenter/Henrik/Nyttig/Norgeomriss/")
+
+# Load data
+discharge = load_data(type = "discharge")
+discharge = discharge$discharge
+
+discharge.east = filter_region(discharge)
+discharge.east.long = make_rec_discharge(discharge.east, reshape = T)
+
+discharge.data = subset_discharge(discharge.east,
+                                  discharge.east.long,
+                                  day_threshold = 364)
+
+# Load matrices
+
+load("mat/discharge_090.RData")
+load("mat/discharge_095.RData")
+load("mat/discharge_0975.RData")
+load("mat/discharge_0990.RData")
+```
+
+
+## Seasonal Distribution
+
+```{r warning=F,message=F,error=F}
+n.clusters.090 = cluster_optimum(mat0.9)
+n.clusters.095 = cluster_optimum(mat0.95)
+n.clusters.0975 = cluster_optimum(mat0.975)
+n.clusters.099 = cluster_optimum(mat0.99)
+
+km.obj.09 = kmeans(mat0.9, n.clusters.090)
+km.obj.095 = kmeans(mat0.95, n.clusters.095)
+km.obj.0975 = kmeans(mat0.975, n.clusters.0975)
+km.obj.099 = kmeans(mat0.99, n.clusters.099)
+
+clusterplot.09 = plot_clusters(km.obj.09, discharge.data, geo, threshold_label = "0.9", zoom=T, zoom_padding = 0.5)
+clusterplot.095 = plot_clusters(km.obj.095, discharge.data, geo, threshold_label = "0.95", zoom = T, zoom_padding = 0.5)
+clusterplot.0975 = plot_clusters(km.obj.0975, discharge.data, geo, threshold_label = "0.975", zoom = T, zoom_padding = 0.5)
+clusterplot.099 = plot_clusters(km.obj.099, discharge.data, geo, threshold_label = "0.99", zoom = T, zoom_padding = 0.5)
+```
+
+```{r warning=F,message=F,error=F}
+events.monthly.09 = cluster_events_monthly(km.obj.09, mat0.9, "0.9")
+
+
+grid.arrange(events.monthly.09[[1]], 
+            events.monthly.09[[2]],
+            events.monthly.09[[3]],
+            events.monthly.09[[4]],
+            events.monthly.09[[5]],
+            events.monthly.09[[6]],
+            events.monthly.09[[7]],
+            layout_matrix = rbind(c(1,1,2,3),
+                                  c(1,1,4,5),
+                                  c(1,1,6,7))) -> cluster.seasonal.09
+
+#events.monthly.095 = cluster_events_monthly(km.obj.095, mat0.95, "0.95")
+
+#grid.arrange(events.monthly.095[[1]], 
+#            events.monthly.095[[2]],
+#            events.monthly.095[[3]],
+#            events.monthly.095[[4]],
+#            events.monthly.095[[5]],
+#            events.monthly.095[[6]],
+#            events.monthly.095[[7]],
+#            events.monthly.095[[8]],
+#            layout_matrix = rbind(c(1,1,2,3),
+#                                  c(1,1,4,5),
+#                                  c(1,1,6,7),
+#                                  c(NA,NA,8,NA))) -> cluster.seasonal.095
+
+events.monthly.0975 = cluster_events_monthly(km.obj.0975, mat0.975, "0.975")
+
+grid.arrange(events.monthly.0975[[1]], 
+            events.monthly.0975[[2]],
+            events.monthly.0975[[3]],
+            events.monthly.0975[[4]],
+            events.monthly.0975[[5]],
+            events.monthly.0975[[6]],
+            events.monthly.0975[[7]],
+            layout_matrix = rbind(c(1,1,2,3),
+                                  c(1,1,4,5),
+                                  c(1,1,6,7))) -> cluster.seasonal.0975
+
+events.monthly.099 = cluster_events_monthly(km.obj.099, mat0.99, "0.99")
+
+grid.arrange(events.monthly.099[[1]], 
+            events.monthly.099[[2]],
+            events.monthly.099[[3]],
+            events.monthly.099[[4]],
+            layout_matrix = rbind(c(1,1,2),
+                                  c(1,1,3),
+                                  c(1,1,4))) -> cluster.seasonal.099
+
+```
+
+# Region: West
+
+```{r warning=F,message=F,error=F}
+setwd("//ad.nr.no/shares/samba_shared/Sommerstudenter/Henrik/WidespreadExtremeWeather")
+
+set.seed(123)
+
+# Load functions
+source("R/initialize.R")
+
+# Load shapefiles
+geo = read_spatial_norway("//ad.nr.no/shares/samba_shared/Sommerstudenter/Henrik/Nyttig/Norgeomriss/")
+
+# Load data
+discharge = load_data(type = "discharge")
+discharge = discharge$discharge
+
+discharge.west = filter_region(discharge, region = "west")
+discharge.west.long = make_rec_discharge(discharge.west, reshape = T)
+
+discharge.data = subset_discharge(discharge.west,
+                                  discharge.west.long,
+                                  day_threshold = 364)
+
+# Create matrices
+
+quantiles = c(0.9, 0.95, 0.975, 0.99)
+
+for (i in 1:length(quantiles)) {
+  this.quantile = quantiles[i]
+  
+  thresholds = extreme_threshold(discharge.data, probs = this.quantile, type = "discharge")
+  
+  extreme.events = extreme_events(discharge.data, thresholds)
+  
+  main.events = main_events(extreme.events)
+  
+  mat = event_matrix(main.events, extreme.events)
+  
+  mat.name = paste0("mat",this.quantile)
+  
+  assign(mat.name, mat)
+}
+```
+
+
+```{r warning=F,message=F,error=F}
+n.clusters.090 = cluster_optimum(mat0.9)
+n.clusters.095 = cluster_optimum(mat0.95)
+n.clusters.0975 = cluster_optimum(mat0.975)
+n.clusters.099 = cluster_optimum(mat0.99)
+
+km.obj.09 = kmeans(mat0.9, n.clusters.090)
+km.obj.095 = kmeans(mat0.95, n.clusters.095)
+km.obj.0975 = kmeans(mat0.975, n.clusters.0975)
+km.obj.099 = kmeans(mat0.99, n.clusters.099)
+
+clusterplot.09 = plot_clusters(km.obj.09, discharge.data, geo, threshold_label = "0.9", zoom=T, zoom_padding = 0.5)
+clusterplot.095 = plot_clusters(km.obj.095, discharge.data, geo, threshold_label = "0.95", zoom = T, zoom_padding = 0.5)
+clusterplot.0975 = plot_clusters(km.obj.0975, discharge.data, geo, threshold_label = "0.975", zoom = T, zoom_padding = 0.5)
+clusterplot.099 = plot_clusters(km.obj.099, discharge.data, geo, threshold_label = "0.99", zoom = T, zoom_padding = 0.5)
+
+(clusters = grid.arrange(clusterplot.09, clusterplot.095, clusterplot.0975, clusterplot.099))
+
+```
+
+## Seaonal Distribution
+
+```{r warning=F,message=F,error=F}
+events.monthly.09 = cluster_events_monthly(km.obj.09, mat0.9, "0.9")
+
+
+grid.arrange(events.monthly.09[[1]], 
+            events.monthly.09[[2]],
+            events.monthly.09[[3]],
+            events.monthly.09[[4]],
+            events.monthly.09[[5]],
+            events.monthly.09[[6]],
+            events.monthly.09[[7]],
+            events.monthly.09[[8]],
+            events.monthly.09[[9]],
+            layout_matrix = rbind(c(1,1,2,3),
+                                  c(1,1,4,5),
+                                  c(1,1,6,7),
+                                  c(NA,NA,8,9))) -> cluster.seasonal.09
+
+events.monthly.095 = cluster_events_monthly(km.obj.095, mat0.95, "0.95")
+
+grid.arrange(events.monthly.095[[1]], 
+            events.monthly.095[[2]],
+            events.monthly.095[[3]],
+            events.monthly.095[[4]],
+            events.monthly.095[[5]],
+            events.monthly.095[[6]],
+            events.monthly.095[[7]],
+            events.monthly.095[[8]],
+            events.monthly.095[[9]],
+            events.monthly.095[[10]],
+            layout_matrix = rbind(c(1,1,2,3),
+                                  c(1,1,4,5),
+                                  c(1,1,6,7),
+                                  c(NA,NA,8,9),
+                                  c(NA,NA,10,NA))) -> cluster.seasonal.095
+
+events.monthly.0975 = cluster_events_monthly(km.obj.0975, mat0.975, "0.975")
+
+grid.arrange(events.monthly.0975[[1]], 
+            events.monthly.0975[[2]],
+            events.monthly.0975[[3]],
+            events.monthly.0975[[4]],
+            events.monthly.0975[[5]],
+            events.monthly.0975[[6]],
+            events.monthly.0975[[7]],
+            events.monthly.0975[[8]],
+            events.monthly.0975[[9]],
+            layout_matrix = rbind(c(1,1,2,3),
+                                  c(1,1,4,5),
+                                  c(1,1,6,7),
+                                  c(NA,NA,8,9))) -> cluster.seasonal.0975
+
+events.monthly.099 = cluster_events_monthly(km.obj.099, mat0.99, "0.99")
+
+grid.arrange(events.monthly.099[[1]], 
+            events.monthly.099[[2]],
+            events.monthly.099[[3]],
+            events.monthly.099[[4]],
+            events.monthly.099[[5]],
+            events.monthly.099[[6]],
+            events.monthly.099[[7]],
+            events.monthly.099[[8]],
+            layout_matrix = rbind(c(1,1,2,3),
+                                  c(1,1,4,5),
+                                  c(1,1,6,7),
+                                  c(NA,NA,8,NA))) -> cluster.seasonal.099
+```
+
